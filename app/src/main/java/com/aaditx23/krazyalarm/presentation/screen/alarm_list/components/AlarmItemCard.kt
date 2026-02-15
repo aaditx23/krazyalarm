@@ -55,7 +55,7 @@ fun AlarmItemCard(
                     .fillMaxWidth()
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Bottom
             ) {
                 Column(
                     modifier = Modifier.weight(1f)
@@ -88,11 +88,24 @@ fun AlarmItemCard(
                         }
                     }
                     // Time
-                    Text(
-                        text = String.format("%02d:%02d", alarm.hour, alarm.minute),
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    val hour12 = if (alarm.hour == 0) 12 else if (alarm.hour > 12) alarm.hour - 12 else alarm.hour
+                    val amPm = if (alarm.hour < 12) "AM" else "PM"
+                    Row(
+                        verticalAlignment = Alignment.Bottom
+                    ) {
+                        Text(
+                            text = String.format("%02d:%02d", hour12, alarm.minute),
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+
+                        )
+                        Text(
+                            text = amPm.lowercase(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Light,
+                            modifier = Modifier.padding(start = 8.dp, bottom = 2.dp)
+                        )
+                    }
                 }
 
                 // Toggle switch
