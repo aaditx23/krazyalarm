@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.aaditx23.krazyalarm.domain.repository.AlarmRepository
 import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +13,6 @@ import org.koin.core.component.inject
 
 class BootReceiver : BroadcastReceiver(), KoinComponent {
 
-    private val alarmRepository: AlarmRepository by inject()
     private val alarmScheduler: AlarmScheduler by inject()
 
     companion object {
@@ -30,20 +28,13 @@ class BootReceiver : BroadcastReceiver(), KoinComponent {
                 // Reschedule all enabled alarms
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        val enabledAlarms = getEnabledAlarms()
-                        enabledAlarms.forEach { alarm ->
-                            alarmScheduler.scheduleAlarm(alarm)
-                        }
-                        Log.d(TAG, "Rescheduled ${enabledAlarms.size} alarms")
+                        alarmScheduler.rescheduleAllAlarms()
+                        Log.d(TAG, "Rescheduled all alarms")
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to reschedule alarms", e)
                     }
                 }
             }
         }
-    }
-
-    private suspend fun getEnabledAlarms(): List<com.aaditx23.krazyalarm.domain.models.Alarm> {
-        return alarmRepository.getEnabledAlarms()
     }
 }

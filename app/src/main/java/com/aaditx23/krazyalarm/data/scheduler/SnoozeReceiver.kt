@@ -1,5 +1,6 @@
 package com.aaditx23.krazyalarm.data.scheduler
 
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -9,7 +10,7 @@ import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-class AlarmReceiver : BroadcastReceiver(), KoinComponent {
+class SnoozeReceiver : BroadcastReceiver(), KoinComponent {
 
     private val alarmRepository: AlarmRepository by inject()
     private val alarmScheduler: AlarmScheduler by inject()
@@ -20,16 +21,16 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
             runBlocking {
                 val alarm = alarmRepository.getAlarm(alarmId)
                 if (alarm != null) {
-                    // Start the alarm ringing service
+                    // Cancel the notification
+                    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    notificationManager.cancel(alarmId.toInt())
+
+                    // Stop the alarm ringing service
                     val serviceIntent = Intent(context, AlarmRingingService::class.java).apply {
+                        action = AlarmRingingService.ACTION_SNOOZE
                         putExtra(AlarmRingingService.EXTRA_ALARM_ID, alarmId)
                     }
-                    context.startForegroundService(serviceIntent)
-
-                    // Reschedule if repeating
-                    if (alarm.days != 0) {
-                        alarmScheduler.scheduleAlarm(alarm)
-                    }
+                    context.startService(serviceIntent)
                 }
             }
         }

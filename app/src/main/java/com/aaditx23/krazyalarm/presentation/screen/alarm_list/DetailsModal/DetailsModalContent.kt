@@ -47,7 +47,10 @@ fun DetailsModalContent(
     onSaveAlarm: () -> Unit,
     modifier: Modifier = Modifier,
     onDelete: () -> Unit = {},
-    onDismiss: () -> Unit = {}
+    onDismiss: () -> Unit = {},
+    onSoundClick: () -> Unit = {},
+    onScheduleClick: () -> Unit = {},
+    onUpdateRingtoneUri: (String?) -> Unit,
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
 
@@ -55,6 +58,7 @@ fun DetailsModalContent(
     events?.let { event ->
         when (event) {
             AlarmEditEvent.SaveSuccess -> onSave()
+            is AlarmEditEvent.SaveSuccessWithTime -> onSave()
             is AlarmEditEvent.SaveError -> {
                 // TODO: Show error message
             }
@@ -106,7 +110,7 @@ fun DetailsModalContent(
             )
 
             ScheduleAlarmButton(
-                onScheduleClick = { /* TODO: Schedule alarm action */ }
+                onScheduleClick = onScheduleClick
             )
         }
 
@@ -124,7 +128,7 @@ fun DetailsModalContent(
         // Sound Card
         SoundCard(
             soundName = "Default (Gentle Warning)",
-            onSoundClick = { /* TODO: Navigate to sound picker */ },
+            onSoundClick = onSoundClick,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 

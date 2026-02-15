@@ -1,5 +1,3 @@
-package com.aaditx23.krazyalarm.presentation.screen.alarm_list
-
 import com.aaditx23.krazyalarm.domain.models.Alarm
 
 data class UiState(
@@ -12,3 +10,7 @@ data class UiState(
     val selectedAlarms: Set<Long> = emptySet(),
     val showDatePicker: Boolean = false
 )
+
+sealed class UiEvent {
+    data class Error(val message: String) : UiEvent()
+}

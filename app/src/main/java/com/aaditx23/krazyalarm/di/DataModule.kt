@@ -5,6 +5,7 @@ import com.aaditx23.krazyalarm.data.local.preferences.SettingsDataStore
 import com.aaditx23.krazyalarm.data.repository.AlarmRepositoryImpl
 import com.aaditx23.krazyalarm.data.repository.SettingsRepositoryImpl
 import com.aaditx23.krazyalarm.domain.repository.AlarmRepository
+import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
 import com.aaditx23.krazyalarm.domain.repository.SettingsRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
@@ -21,4 +22,7 @@ val dataModule = module {
     // Repositories
     single<AlarmRepository> { AlarmRepositoryImpl(get()) }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
+
+    // Scheduler
+    single<AlarmScheduler> { com.aaditx23.krazyalarm.data.scheduler.AlarmScheduler(androidContext(), get()) }
 }

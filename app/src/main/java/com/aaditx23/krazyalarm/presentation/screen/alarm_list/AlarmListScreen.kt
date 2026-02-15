@@ -1,5 +1,7 @@
 package com.aaditx23.krazyalarm.presentation.screen.alarm_list
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +20,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -25,23 +29,29 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.presentation.components.EmptyState
 import com.aaditx23.krazyalarm.presentation.components.ErrorState
 import com.aaditx23.krazyalarm.presentation.components.LoadingState
+import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.AlarmEditEvent
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.DetailsModalContent
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.components.AlarmItemCard
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +62,46 @@ fun AlarmListScreen(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val editState by viewModel.editState.collectAsState()
     val editEvents by viewModel.editEvents.collectAsState()
+    val uiEvents by viewModel.uiEvents.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    val ringtonePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val uri = result.data?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            viewModel.updateRingtoneUri(uri?.toString())
+        }
+    }
+
+    LaunchedEffect(editEvents) {
+        editEvents?.let { event ->
+            when (event) {
+                is AlarmEditEvent.SaveSuccessWithTime -> {
+                    snackbarHostState.showSnackbar("Alarm set for ${event.hours} hours and ${event.minutes} minutes from now")
+                }
+                is AlarmEditEvent.SaveError -> {
+                    snackbarHostState.showSnackbar("Error: ${event.message}")
+                }
+                AlarmEditEvent.SaveSuccess -> {
+                    // Handle old event if needed
+                }
+            }
+            viewModel.consumeEditEvent()
+        }
+    }
+
+    LaunchedEffect(uiEvents) {
+        uiEvents?.let { event ->
+            when (event) {
+                is UiEvent.Error -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+            }
+            viewModel.consumeUiEvent()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -78,7 +128,8 @@ fun AlarmListScreen(
                     Icon(Icons.Default.Add, contentDescription = "Add Alarm")
                 }
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -149,6 +200,9 @@ fun AlarmListScreen(
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteSelectedAlarms()
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar("Deleted ${uiState.selectedAlarms.size} alarm(s)")
+                    }
                 }) {
                     Text("Delete")
                 }
@@ -205,7 +259,19 @@ fun AlarmListScreen(
                 onSaveAlarm = viewModel::saveAlarm,
                 modifier = Modifier,
                 onDelete = viewModel::deleteCurrentAlarm,
-                onDismiss = { viewModel.showSheet(false) }
+                onDismiss = { viewModel.showSheet(false) },
+                onSoundClick = {
+                    val intent = android.content.Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_ALARM)
+                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
+                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, editState.ringtoneUri?.let { android.net.Uri.parse(it) })
+                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                    }
+                    ringtonePickerLauncher.launch(intent)
+                },
+                onScheduleClick = { viewModel.showDatePicker(true) },
+                onUpdateRingtoneUri = viewModel::updateRingtoneUri,
             )
         }
 
@@ -213,6 +279,19 @@ fun AlarmListScreen(
             if (sheetState.isVisible) {
                 sheetState.expand()
             }
+        }
+    }
+
+    if (uiState.showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { viewModel.showDatePicker(false) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.showDatePicker(false) }) {
+                    Text("OK")
+                }
+            }
+        ) {
+            DatePicker(state = rememberDatePickerState())
         }
     }
 }

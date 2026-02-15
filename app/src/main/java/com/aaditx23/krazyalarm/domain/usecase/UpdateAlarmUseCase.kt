@@ -1,5 +1,6 @@
 package com.aaditx23.krazyalarm.domain.usecase
 
+import com.aaditx23.krazyalarm.domain.models.Alarm
 import com.aaditx23.krazyalarm.domain.models.AlarmInput
 import com.aaditx23.krazyalarm.domain.repository.AlarmRepository
 import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
@@ -8,7 +9,7 @@ class UpdateAlarmUseCase(
     private val alarmRepository: AlarmRepository,
     private val alarmScheduler: AlarmScheduler
 ) {
-    suspend operator fun invoke(id: Long, input: AlarmInput): Result<Unit> {
+    suspend operator fun invoke(id: Long, input: AlarmInput): Result<Alarm> {
         return try {
             // Validate input
             validateAlarmInput(input)
@@ -25,11 +26,12 @@ class UpdateAlarmUseCase(
                     } else {
                         alarmScheduler.cancelAlarm(id)
                     }
+                    Result.success(alarm)
+                } else {
+                    Result.failure(Exception("Failed to retrieve updated alarm"))
                 }
-
-                result
             } else {
-                result
+                Result.failure(result.exceptionOrNull() ?: Exception("Unknown error"))
             }
         } catch (e: Exception) {
             Result.failure(e)

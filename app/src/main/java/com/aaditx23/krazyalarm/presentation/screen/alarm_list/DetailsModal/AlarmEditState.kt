@@ -15,10 +15,12 @@ data class AlarmEditState(
     val flashPattern: FlashPattern = FlashPattern.None,
     val vibrationPattern: VibrationPattern = VibrationPattern.Continuous,
     val vibrationIntensity: VibrationIntensity = VibrationIntensity.MEDIUM,
-    val snoozeDurationMinutes: Int = 10
+    val snoozeDurationMinutes: Int = 10,
+    val ringtoneUri: String? = null
 )
 
 sealed class AlarmEditEvent {
     object SaveSuccess : AlarmEditEvent()
+    data class SaveSuccessWithTime(val hours: Int, val minutes: Int) : AlarmEditEvent()
     data class SaveError(val message: String) : AlarmEditEvent()
 }

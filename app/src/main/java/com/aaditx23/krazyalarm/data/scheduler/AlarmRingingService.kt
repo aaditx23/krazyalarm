@@ -31,7 +31,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import java.io.IOException
@@ -375,7 +374,7 @@ class AlarmRingingService : Service() {
                     // Schedule snooze alarm
                     val snoozeTime = System.currentTimeMillis() + (alarm.snoozeDurationMinutes * 60 * 1000)
                     val snoozeIntent = Intent(this@AlarmRingingService, AlarmReceiver::class.java).apply {
-                        putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarm.id)
+                        putExtra("alarm_id", alarm.id)
                     }
 
                     val pendingIntent = PendingIntent.getBroadcast(

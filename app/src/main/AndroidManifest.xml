@@ -52,6 +52,16 @@
             android:name=".data.scheduler.AlarmReceiver"
             android:exported="false" />
 
+        <!-- Dismiss Receiver -->
+        <receiver
+            android:name=".data.scheduler.DismissReceiver"
+            android:exported="false" />
+
+        <!-- Snooze Receiver -->
+        <receiver
+            android:name=".data.scheduler.SnoozeReceiver"
+            android:exported="false" />
+
         <!-- Boot Receiver -->
         <receiver
             android:name=".data.scheduler.BootReceiver"

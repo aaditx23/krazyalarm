@@ -1,5 +1,6 @@
 package com.aaditx23.krazyalarm.presentation.screen.alarm_list
 
+import UiEvent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aaditx23.krazyalarm.domain.models.AlarmInput
@@ -40,6 +41,9 @@ class AlarmListViewModel(
     private val _editEvents = MutableStateFlow<AlarmEditEvent?>(null)
     val editEvents: StateFlow<AlarmEditEvent?> = _editEvents.asStateFlow()
 
+    private val _uiEvents = MutableStateFlow<UiEvent?>(null)
+    val uiEvents: StateFlow<UiEvent?> = _uiEvents.asStateFlow()
+
     private var editingAlarmId: Long? = null
 
     init {
@@ -60,10 +64,8 @@ class AlarmListViewModel(
     fun toggleAlarm(alarmId: Long, enabled: Boolean) {
         viewModelScope.launch {
             toggleAlarmUseCase(alarmId, enabled)
-                .onFailure { exception ->
-                    // TODO: Show error message to user
-                    // For now, just log the error
-                    println("Failed to toggle alarm: ${exception.message}")
+                .onFailure {
+                    _uiEvents.value = UiEvent.Error("Failed to ${if (enabled) "enable" else "disable"} alarm")
                 }
         }
     }
@@ -106,7 +108,8 @@ class AlarmListViewModel(
                         flashPattern = FlashPattern.fromId(alarm.flashPatternId),
                         vibrationPattern = VibrationPattern.fromId(alarm.vibrationPatternId),
                         vibrationIntensity = alarm.vibrationIntensity,
-                        snoozeDurationMinutes = alarm.snoozeDurationMinutes
+                        snoozeDurationMinutes = alarm.snoozeDurationMinutes,
+                        ringtoneUri = alarm.ringtoneUri
                     )
                 } else {
                     _editEvents.value = AlarmEditEvent.SaveError("Alarm not found")
@@ -153,6 +156,10 @@ class AlarmListViewModel(
         _editState.value = _editState.value.copy(snoozeDurationMinutes = snoozeDurationMinutes)
     }
 
+    fun updateRingtoneUri(ringtoneUri: String?) {
+        _editState.value = _editState.value.copy(ringtoneUri = ringtoneUri)
+    }
+
     fun saveAlarm() {
         viewModelScope.launch {
             val state = _editState.value
@@ -162,6 +169,7 @@ class AlarmListViewModel(
                 days = state.days,
                 enabled = state.enabled,
                 label = state.label,
+                ringtoneUri = state.ringtoneUri,
                 flashPatternId = state.flashPattern.id,
                 vibrationPatternId = state.vibrationPattern.id,
                 vibrationIntensity = state.vibrationIntensity,
@@ -169,13 +177,22 @@ class AlarmListViewModel(
             )
 
             try {
-                if (editingAlarmId != null) {
+                val result = if (editingAlarmId != null) {
                     updateAlarmUseCase(editingAlarmId!!, alarmInput)
                 } else {
                     createAlarmUseCase(alarmInput)
                 }
-                _editEvents.value = AlarmEditEvent.SaveSuccess
-                loadAlarms() // Refresh list
+
+                if (result.isSuccess) {
+                    val alarm = result.getOrThrow()
+                    val nextTime = calculateNextAlarmTime(alarm)
+                    val hours = nextTime / 3600000
+                    val minutes = (nextTime % 3600000) / 60000
+                    _editEvents.value = AlarmEditEvent.SaveSuccessWithTime(hours.toInt(), minutes.toInt())
+                    loadAlarms() // Refresh list
+                } else {
+                    _editEvents.value = AlarmEditEvent.SaveError(result.exceptionOrNull()?.message ?: "Unknown error")
+                }
             } catch (e: Exception) {
                 _editEvents.value = AlarmEditEvent.SaveError("Failed to save alarm: ${e.message}")
             }
@@ -209,9 +226,8 @@ class AlarmListViewModel(
             val current = _uiState.value
             current.selectedAlarms.forEach { alarmId ->
                 deleteAlarmUseCase(alarmId)
-                    .onFailure { exception ->
-                        // TODO: Show error message
-                        println("Failed to delete alarm: ${exception.message}")
+                    .onFailure {
+                        _uiEvents.value = UiEvent.Error("Failed to delete some alarms")
                     }
             }
             _uiState.value = current.copy(selectedAlarms = emptySet(), isSelectMode = false, showDeleteDialog = false)
@@ -238,5 +254,27 @@ class AlarmListViewModel(
         editingAlarmId?.let { deleteAlarm(it) }
         _uiState.value = _uiState.value.copy(showSheet = false)
         loadAlarms()
+    }
+
+    fun showDatePicker(show: Boolean) {
+        _uiState.value = _uiState.value.copy(showDatePicker = show)
+    }
+
+    fun consumeUiEvent() {
+        _uiEvents.value = null
+    }
+
+    private fun calculateNextAlarmTime(alarm: com.aaditx23.krazyalarm.domain.models.Alarm): Long {
+        val calendar = java.util.Calendar.getInstance()
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, alarm.hour)
+        calendar.set(java.util.Calendar.MINUTE, alarm.minute)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+
+        if (calendar.timeInMillis <= System.currentTimeMillis()) {
+            calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
+        }
+
+        return calendar.timeInMillis - System.currentTimeMillis()
     }
 }
