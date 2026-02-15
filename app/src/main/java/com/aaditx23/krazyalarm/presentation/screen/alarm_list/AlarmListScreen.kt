@@ -15,22 +15,25 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
@@ -46,7 +49,6 @@ fun AlarmListScreen(
     viewModel: AlarmListViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val editState by viewModel.editState.collectAsState()
     val editEvents by viewModel.editEvents.collectAsState()
@@ -54,15 +56,27 @@ fun AlarmListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Alarms") }
+                title = { Text(if (uiState.isSelectMode) "${uiState.selectedAlarms.size} selected" else "Alarms") },
+                actions = {
+                    if (uiState.isSelectMode) {
+                        IconButton(onClick = { viewModel.toggleSelectMode() }) {
+                            Icon(Icons.Default.Close, contentDescription = "Cancel")
+                        }
+                        IconButton(onClick = { viewModel.showDeleteDialog(true) }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete selected")
+                        }
+                    }
+                }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                viewModel.startCreateAlarm()
-                showSheet = true
-            }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Alarm")
+            if (!uiState.isSelectMode) {
+                FloatingActionButton(onClick = {
+                    viewModel.startCreateAlarm()
+                    viewModel.showSheet(true)
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Alarm")
+                }
             }
         }
     ) { paddingValues ->
@@ -71,51 +85,86 @@ fun AlarmListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (val state = uiState) {
-                is UiState.Loading -> {
+            when {
+                uiState.isLoading -> {
                     LoadingState()
                 }
-                is UiState.Success -> {
-                    if (state.alarms.isEmpty()) {
-                        EmptyState(
-                            title = "No alarms set",
-                            message = "Tap the + button to create your first alarm"
-                        )
-                    } else {
-                        LazyColumn(
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(
-                                items = state.alarms,
-                                key = { it.id }
-                            ) { alarm ->
-                                AlarmItemCard(
-                                    alarm = alarm,
-                                    onToggle = { enabled ->
+                uiState.errorMessage != null -> {
+                    ErrorState(message = uiState.errorMessage!!)
+                }
+                uiState.alarms.isEmpty() -> {
+                    EmptyState(
+                        title = "No alarms set",
+                        message = "Tap the + button to create your first alarm"
+                    )
+                }
+                else -> {
+                    LazyColumn(
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(
+                            items = uiState.alarms,
+                            key = { it.id }
+                        ) { alarm ->
+                            AlarmItemCard(
+                                alarm = alarm,
+                                isSelectMode = uiState.isSelectMode,
+                                isSelected = uiState.selectedAlarms.contains(alarm.id),
+                                onToggle = { enabled ->
+                                    if (!uiState.isSelectMode) {
                                         viewModel.toggleAlarm(alarm.id, enabled)
-                                    },
-                                    onEdit = {
+                                    }
+                                },
+                                onEdit = {
+                                    if (!uiState.isSelectMode) {
                                         viewModel.startEditAlarm(alarm.id)
-                                        showSheet = true
-                                    },
-                                    onDelete = { viewModel.deleteAlarm(alarm.id) }
-                                )
-                            }
+                                        viewModel.showSheet(true)
+                                    }
+                                },
+                                onLongClick = {
+                                    if (!uiState.isSelectMode) {
+                                        viewModel.toggleSelectModeAndSelect(alarm.id)
+                                    }
+                                },
+                                onSelect = {
+                                    if (uiState.isSelectMode) {
+                                        viewModel.toggleAlarmSelection(alarm.id)
+                                    }
+                                },
+                                onDelete = { viewModel.deleteAlarm(alarm.id) }
+                            )
                         }
                     }
-                }
-                is UiState.Error -> {
-                    ErrorState(message = state.message)
                 }
             }
         }
     }
 
-    if (showSheet) {
+    if (uiState.showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.showDeleteDialog(false) },
+            title = { Text("Delete Alarms") },
+            text = { Text("Are you sure you want to delete ${uiState.selectedAlarms.size} alarm(s)?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteSelectedAlarms()
+                }) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.showDeleteDialog(false) }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (uiState.showSheet) {
         ModalBottomSheet(
             onDismissRequest = {
-                showSheet = false
+                viewModel.showSheet(false)
             },
             sheetState = sheetState,
             dragHandle = {
@@ -138,7 +187,7 @@ fun AlarmListScreen(
         ) {
             DetailsModalContent(
                 onSave = {
-                    showSheet = false
+                    viewModel.showSheet(false)
                     viewModel.loadAlarms() // Refresh the list
                 },
                 state = editState,
@@ -155,7 +204,8 @@ fun AlarmListScreen(
                 onUpdateSnoozeDuration = viewModel::updateSnoozeDuration,
                 onSaveAlarm = viewModel::saveAlarm,
                 modifier = Modifier,
-                onDelete = { /* TODO: handle delete */ }
+                onDelete = viewModel::deleteCurrentAlarm,
+                onDismiss = { viewModel.showSheet(false) }
             )
         }
 

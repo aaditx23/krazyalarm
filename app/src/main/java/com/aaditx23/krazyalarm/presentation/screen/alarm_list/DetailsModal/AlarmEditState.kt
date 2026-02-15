@@ -1,4 +1,4 @@
-package com.aaditx23.krazyalarm.presentation.screen.alarm_list
+package com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal
 
 import com.aaditx23.krazyalarm.domain.models.FlashPattern
 import com.aaditx23.krazyalarm.domain.models.VibrationIntensity

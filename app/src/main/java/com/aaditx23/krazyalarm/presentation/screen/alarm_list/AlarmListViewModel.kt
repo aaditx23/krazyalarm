@@ -2,7 +2,6 @@ package com.aaditx23.krazyalarm.presentation.screen.alarm_list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.aaditx23.krazyalarm.domain.models.Alarm
 import com.aaditx23.krazyalarm.domain.models.AlarmInput
 import com.aaditx23.krazyalarm.domain.models.FlashPattern
 import com.aaditx23.krazyalarm.domain.models.VibrationIntensity
@@ -13,6 +12,8 @@ import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmsUseCase
 import com.aaditx23.krazyalarm.domain.usecase.ToggleAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.UpdateAlarmUseCase
+import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.AlarmEditEvent
+import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.AlarmEditState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,12 +21,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-
-sealed class UiState {
-    object Loading : UiState()
-    data class Success(val alarms: List<Alarm>) : UiState()
-    data class Error(val message: String) : UiState()
-}
 
 class AlarmListViewModel(
     private val getAlarmsUseCase: GetAlarmsUseCase,
@@ -36,7 +31,7 @@ class AlarmListViewModel(
     private val updateAlarmUseCase: UpdateAlarmUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
+    private val _uiState = MutableStateFlow(UiState(isLoading = true))
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
     private val _editState = MutableStateFlow(AlarmEditState())
@@ -54,10 +49,10 @@ class AlarmListViewModel(
     fun loadAlarms() {
         getAlarmsUseCase()
             .onEach { alarms ->
-                _uiState.value = UiState.Success(alarms)
+                _uiState.value = _uiState.value.copy(isLoading = false, alarms = alarms, errorMessage = null)
             }
             .catch { exception ->
-                _uiState.value = UiState.Error("Failed to load alarms: ${exception.message}")
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "Failed to load alarms: ${exception.message}")
             }
             .launchIn(viewModelScope)
     }
@@ -189,5 +184,59 @@ class AlarmListViewModel(
 
     fun consumeEditEvent() {
         _editEvents.value = null
+    }
+
+    fun toggleSelectMode() {
+        val current = _uiState.value
+        _uiState.value = current.copy(
+            isSelectMode = !current.isSelectMode,
+            selectedAlarms = if (!current.isSelectMode) emptySet() else current.selectedAlarms
+        )
+    }
+
+    fun toggleAlarmSelection(alarmId: Long) {
+        val current = _uiState.value
+        val newSelected = if (current.selectedAlarms.contains(alarmId)) {
+            current.selectedAlarms - alarmId
+        } else {
+            current.selectedAlarms + alarmId
+        }
+        _uiState.value = current.copy(selectedAlarms = newSelected)
+    }
+
+    fun deleteSelectedAlarms() {
+        viewModelScope.launch {
+            val current = _uiState.value
+            current.selectedAlarms.forEach { alarmId ->
+                deleteAlarmUseCase(alarmId)
+                    .onFailure { exception ->
+                        // TODO: Show error message
+                        println("Failed to delete alarm: ${exception.message}")
+                    }
+            }
+            _uiState.value = current.copy(selectedAlarms = emptySet(), isSelectMode = false, showDeleteDialog = false)
+            loadAlarms()
+        }
+    }
+
+    fun showSheet(show: Boolean) {
+        _uiState.value = _uiState.value.copy(showSheet = show)
+    }
+
+    fun showDeleteDialog(show: Boolean) {
+        _uiState.value = _uiState.value.copy(showDeleteDialog = show)
+    }
+
+    fun toggleSelectModeAndSelect(alarmId: Long) {
+        _uiState.value = _uiState.value.copy(
+            isSelectMode = true,
+            selectedAlarms = setOf(alarmId)
+        )
+    }
+
+    fun deleteCurrentAlarm() {
+        editingAlarmId?.let { deleteAlarm(it) }
+        _uiState.value = _uiState.value.copy(showSheet = false)
+        loadAlarms()
     }
 }

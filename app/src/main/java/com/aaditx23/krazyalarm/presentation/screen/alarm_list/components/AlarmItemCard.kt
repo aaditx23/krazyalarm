@@ -1,7 +1,9 @@
 package com.aaditx23.krazyalarm.presentation.screen.alarm_list.components
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,68 +24,84 @@ import com.aaditx23.krazyalarm.domain.models.Alarm
 @Composable
 fun AlarmItemCard(
     alarm: Alarm,
+    isSelectMode: Boolean,
+    isSelected: Boolean,
     onToggle: (Boolean) -> Unit,
     onEdit: () -> Unit,
+    onLongClick: () -> Unit,
+    onSelect: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        onClick = onEdit,
-        colors = CardDefaults.cardColors(
-            containerColor = if (alarm.enabled) MaterialTheme.colorScheme.secondaryContainer else CardDefaults.cardColors().containerColor
-        )
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = if (isSelectMode) onSelect else onEdit,
+                onLongClick = if (!isSelectMode) onLongClick else null
+            )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = when {
+                    isSelectMode && isSelected -> MaterialTheme.colorScheme.tertiaryContainer
+                    alarm.enabled -> MaterialTheme.colorScheme.secondaryContainer
+                    else -> CardDefaults.cardColors().containerColor
+                }
+            )
         ) {
-            Column(
-                modifier = Modifier.weight(1f)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-
-                Row(
-                    modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
 
-                    // Days of week
-                    val daysText = getDaysOfWeekText(alarm.days)
-                    if (daysText.isNotEmpty()) {
-                        Text(
-                            text = daysText,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Normal
-                        )
-                    }
+                    Row(
+                        modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
 
-                    // Label
-                    alarm.label?.let { label ->
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Thin,
-                            modifier = Modifier.padding(horizontal = 12.dp)
-                        )
+                        // Days of week
+                        val daysText = getDaysOfWeekText(alarm.days)
+                        if (daysText.isNotEmpty()) {
+                            Text(
+                                text = daysText,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Normal
+                            )
+                        }
+
+                        // Label
+                        alarm.label?.let { label ->
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Thin,
+                                modifier = Modifier.padding(horizontal = 12.dp)
+                            )
+                        }
                     }
+                    // Time
+                    Text(
+                        text = String.format("%02d:%02d", alarm.hour, alarm.minute),
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-                // Time
-                Text(
-                    text = String.format("%02d:%02d", alarm.hour, alarm.minute),
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
+
+                // Toggle switch
+                Switch(
+                    checked = alarm.enabled,
+                    onCheckedChange = onToggle,
+
                 )
             }
-
-            // Toggle switch
-            Switch(
-                checked = alarm.enabled,
-                onCheckedChange = onToggle
-            )
         }
     }
 }

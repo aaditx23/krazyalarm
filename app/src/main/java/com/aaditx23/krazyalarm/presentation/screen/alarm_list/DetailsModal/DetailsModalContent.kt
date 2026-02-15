@@ -19,8 +19,6 @@ import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.domain.models.FlashPattern
 import com.aaditx23.krazyalarm.domain.models.VibrationIntensity
 import com.aaditx23.krazyalarm.domain.models.VibrationPattern
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.AlarmEditEvent
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.AlarmEditState
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.ActionButtons
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.AlarmNameCard
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.DaySelectorSection
@@ -48,7 +46,8 @@ fun DetailsModalContent(
     onUpdateSnoozeDuration: (Int) -> Unit,
     onSaveAlarm: () -> Unit,
     modifier: Modifier = Modifier,
-    onDelete: () -> Unit = {}
+    onDelete: () -> Unit = {},
+    onDismiss: () -> Unit = {}
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
 
@@ -151,6 +150,7 @@ fun DetailsModalContent(
             onSave = onSaveAlarm,
             isEditMode = state.isEditMode,
             isLoading = state.isLoading,
+            onDismiss = onDismiss,
             modifier = Modifier.padding(horizontal = 24.dp)
         )
 

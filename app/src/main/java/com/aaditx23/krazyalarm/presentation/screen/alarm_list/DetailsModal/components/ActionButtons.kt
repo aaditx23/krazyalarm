@@ -24,25 +24,24 @@ fun ActionButtons(
     onSave: () -> Unit,
     isEditMode: Boolean,
     isLoading: Boolean,
+    onDismiss: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Delete Button (only show in edit mode)
-        if (isEditMode) {
-            OutlinedButton(
-                onClick = onDelete,
-                shape = RoundedCornerShape(24.dp),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text(
-                    text = "Delete",
-                )
-            }
+        // Left Button: Delete in edit mode, Cancel otherwise
+        OutlinedButton(
+            onClick = if (isEditMode) onDelete else onDismiss,
+            shape = RoundedCornerShape(24.dp),
+            colors = if (isEditMode) ButtonDefaults.outlinedButtonColors(
+                contentColor = MaterialTheme.colorScheme.error
+            ) else ButtonDefaults.outlinedButtonColors()
+        ) {
+            Text(
+                text = if (isEditMode) "Delete" else "Cancel",
+            )
         }
 
         // Save Button
