@@ -116,6 +116,7 @@ class AlarmRepositoryImpl(
             flashPatternId = flashPatternId,
             vibrationPatternId = vibrationPatternId,
             vibrationIntensity = VibrationIntensity.valueOf(vibrationIntensity),
+            volume = volume,
             snoozeDurationMinutes = snoozeDurationMinutes,
             scheduledDate = scheduledDate,
             createdAt = createdAt,

@@ -73,6 +73,12 @@ class SettingsViewModel(
             settingsRepository.setDefaultVibrationIntensity(intensity)
         }
     }
+
+    fun updateVolume(volume: Int) {
+        viewModelScope.launch {
+            settingsRepository.setDefaultVolume(volume)
+        }
+    }
 }
 
 data class SettingsUiState(
@@ -80,6 +86,7 @@ data class SettingsUiState(
     val snoozeDuration: Int = 10,
     val defaultFlashPattern: String = "NONE",
     val defaultVibrationPattern: String = "CONTINUOUS",
-    val defaultVibrationIntensity: String = "MEDIUM"
+    val defaultVibrationIntensity: String = "MEDIUM",
+    val defaultVolume: Int = 100
 )
 

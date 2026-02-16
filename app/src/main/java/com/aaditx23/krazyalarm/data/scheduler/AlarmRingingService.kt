@@ -13,6 +13,7 @@ import android.hardware.camera2.CameraManager
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
+import android.media.audiofx.LoudnessEnhancer
 import android.os.Build
 import android.os.IBinder
 import android.os.VibrationEffect
@@ -28,13 +29,13 @@ import com.aaditx23.krazyalarm.domain.models.VibrationIntensity
 import com.aaditx23.krazyalarm.domain.models.VibrationPattern
 import com.aaditx23.krazyalarm.domain.repository.AlarmRepository
 import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
+import com.aaditx23.krazyalarm.presentation.screen.alarm_ringing.AlarmRingingActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import java.io.IOException
 import androidx.core.net.toUri
 
 class AlarmRingingService : Service() {
@@ -53,6 +54,7 @@ class AlarmRingingService : Service() {
 
     private var currentAlarm: Alarm? = null
     private var mediaPlayer: MediaPlayer? = null
+    private var loudnessEnhancer: LoudnessEnhancer? = null
     private var vibrator: Vibrator? = null
     private var cameraManager: CameraManager? = null
     private var flashJob: Job? = null
@@ -119,10 +121,7 @@ class AlarmRingingService : Service() {
     }
 
     private fun createNotification(alarm: Alarm): Notification {
-        val fullScreenIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra(EXTRA_ALARM_ID, alarm.id)
-        }
+        val fullScreenIntent = AlarmRingingActivity.createIntent(this, alarm.id)
 
         val fullScreenPendingIntent = PendingIntent.getActivity(
             this,
@@ -170,23 +169,86 @@ class AlarmRingingService : Service() {
 
     private fun startRingtone(alarm: Alarm) {
         try {
-            mediaPlayer = MediaPlayer().apply {
-                val ringtoneUri = alarm.ringtoneUri?.toUri()
-                    ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+            // Set system alarm volume to maximum for best quality
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+            val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM)
+            audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, maxVolume, 0)
 
-                setDataSource(this@AlarmRingingService, ringtoneUri)
+            mediaPlayer = MediaPlayer().apply {
+                // Try to use custom ringtone first, fallback to default if it fails
+                val ringtoneUri = alarm.ringtoneUri?.toUri()
+                var dataSourceSet = false
+
+                if (ringtoneUri != null) {
+                    try {
+                        setDataSource(this@AlarmRingingService, ringtoneUri)
+                        dataSourceSet = true
+                        Log.d(TAG, "Using custom ringtone: $ringtoneUri")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to load custom ringtone, falling back to default", e)
+                        reset() // Reset MediaPlayer after failed setDataSource
+                    }
+                }
+
+                // If custom ringtone failed or wasn't set, use actual default alarm ringtone
+                if (!dataSourceSet) {
+                    val defaultUri = try {
+                        val uri = RingtoneManager.getActualDefaultRingtoneUri(
+                            this@AlarmRingingService,
+                            RingtoneManager.TYPE_ALARM
+                        )
+                        uri ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Could not get actual default alarm ringtone, using notification", e)
+                        RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                    }
+
+                    try {
+                        setDataSource(this@AlarmRingingService, defaultUri)
+                        Log.d(TAG, "Using actual default alarm ringtone: $defaultUri")
+                    } catch (e: Exception) {
+                        // If even that fails, try system notification sound as last resort
+                        Log.e(TAG, "Default alarm ringtone failed, trying notification sound", e)
+                        reset()
+                        val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                        setDataSource(this@AlarmRingingService, notificationUri)
+                    }
+                }
+
                 setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ALARM)
                         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
-                isLooping = true
+
                 prepare()
+
+                // Use LoudnessEnhancer for real volume boost
+                if (alarm.volume > 100) {
+                    try {
+                        loudnessEnhancer = LoudnessEnhancer(audioSessionId).apply {
+                            // Calculate gain in millibels
+                            val ratio = alarm.volume / 100.0
+                            val decibels = 20 * kotlin.math.log10(ratio)
+                            val millibels = (decibels * 100).toInt().coerceIn(0, 3000)
+
+                            Log.d(TAG, "LoudnessEnhancer: ${alarm.volume}% = +${millibels}mB (+${millibels/100}dB)")
+                            setTargetGain(millibels)
+                            enabled = true
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to apply LoudnessEnhancer", e)
+                    }
+                }
+
+                isLooping = true
                 start()
             }
-        } catch (e: IOException) {
-            Log.e(TAG, "Failed to start ringtone", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start ringtone completely", e)
+            // Still stop the service if we absolutely can't play any sound
+            stopSelf()
         }
     }
 
@@ -398,6 +460,11 @@ class AlarmRingingService : Service() {
     }
 
     private fun stopAllAlarmComponents() {
+        // Stop LoudnessEnhancer
+        loudnessEnhancer?.enabled = false
+        loudnessEnhancer?.release()
+        loudnessEnhancer = null
+
         // Stop media player
         mediaPlayer?.apply {
             if (isPlaying) stop()

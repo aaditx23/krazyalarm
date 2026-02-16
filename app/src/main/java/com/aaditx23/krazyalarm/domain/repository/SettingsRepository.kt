@@ -17,4 +17,7 @@ interface SettingsRepository {
 
     val defaultVibrationIntensity: Flow<String>
     suspend fun setDefaultVibrationIntensity(intensity: String)
+
+    val defaultVolume: Flow<Int>
+    suspend fun setDefaultVolume(volume: Int)
 }

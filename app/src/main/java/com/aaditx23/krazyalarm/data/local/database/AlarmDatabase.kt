@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [AlarmEntity::class],
@@ -17,6 +19,7 @@ abstract class AlarmDatabase : RoomDatabase() {
     companion object {
         private const val DATABASE_NAME = "krazyalarm.db"
 
+
         @Volatile
         private var INSTANCE: AlarmDatabase? = null
 
@@ -26,7 +29,8 @@ abstract class AlarmDatabase : RoomDatabase() {
                     context.applicationContext,
                     AlarmDatabase::class.java,
                     DATABASE_NAME
-                ).build()
+                )
+                    .build()
                 INSTANCE = instance
                 instance
             }

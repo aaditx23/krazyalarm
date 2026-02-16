@@ -94,12 +94,14 @@ class AlarmListViewModel(
             val defaultFlashPatternId = settingsRepository.defaultFlashPattern.first()
             val defaultVibrationPatternId = settingsRepository.defaultVibrationPattern.first()
             val defaultSnoozeDuration = settingsRepository.snoozeDefaultMinutes.first()
+            val defaultVolume = settingsRepository.defaultVolume.first()
 
             _editState.value = AlarmEditState(
                 hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
                 minute = currentTime.get(java.util.Calendar.MINUTE),
                 flashPattern = FlashPattern.fromId(defaultFlashPatternId),
                 vibrationPattern = VibrationPattern.fromId(defaultVibrationPatternId),
+                volume = defaultVolume,
                 snoozeDurationMinutes = defaultSnoozeDuration
             )
         }
@@ -128,6 +130,7 @@ class AlarmListViewModel(
                         flashPattern = FlashPattern.fromId(alarm.flashPatternId),
                         vibrationPattern = VibrationPattern.fromId(alarm.vibrationPatternId),
                         vibrationIntensity = alarm.vibrationIntensity,
+                        volume = alarm.volume,
                         snoozeDurationMinutes = alarm.snoozeDurationMinutes,
                         ringtoneUri = alarm.ringtoneUri,
                         scheduledDate = alarm.scheduledDate
@@ -177,6 +180,10 @@ class AlarmListViewModel(
         _editState.value = _editState.value.copy(vibrationIntensity = vibrationIntensity)
     }
 
+    fun updateVolume(volume: Int) {
+        _editState.value = _editState.value.copy(volume = volume.coerceIn(1, 150))
+    }
+
     fun updateSnoozeDuration(snoozeDurationMinutes: Int) {
         _editState.value = _editState.value.copy(snoozeDurationMinutes = snoozeDurationMinutes)
     }
@@ -206,6 +213,7 @@ class AlarmListViewModel(
                 flashPatternId = state.flashPattern.id,
                 vibrationPatternId = state.vibrationPattern.id,
                 vibrationIntensity = state.vibrationIntensity,
+                volume = state.volume,
                 snoozeDurationMinutes = state.snoozeDurationMinutes,
                 scheduledDate = state.scheduledDate
             )

@@ -15,6 +15,7 @@ data class AlarmEditState(
     val flashPattern: FlashPattern = FlashPattern.None,
     val vibrationPattern: VibrationPattern = VibrationPattern.Continuous,
     val vibrationIntensity: VibrationIntensity = VibrationIntensity.MEDIUM,
+    val volume: Int = 100,
     val snoozeDurationMinutes: Int = 10,
     val ringtoneUri: String? = null,
     val ringtoneName: String = "Default",

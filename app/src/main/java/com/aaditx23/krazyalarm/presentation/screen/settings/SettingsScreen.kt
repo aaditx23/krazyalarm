@@ -69,6 +69,12 @@ fun SettingsScreen(
                 selectedPattern = VibrationPattern.fromId(uiState.defaultVibrationPattern).displayName,
                 onClick = onNavigateToVibrationPatterns
             )
+
+            // Volume Slider (with overclock support up to 150%)
+            VolumeCard(
+                volume = uiState.defaultVolume,
+                onVolumeChange = { viewModel.updateVolume(it) }
+            )
         }
     }
 }

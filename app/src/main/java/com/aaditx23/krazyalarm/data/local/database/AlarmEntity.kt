@@ -22,6 +22,7 @@ data class AlarmEntity(
     val flashPatternId: String? = null,
     val vibrationPatternId: String? = null,
     val vibrationIntensity: String = "MEDIUM",
+    val volume: Int = 100,
     val snoozeDurationMinutes: Int = 10,
     val scheduledDate: Long? = null, // Specific date in millis for one-time alarms
     val createdAt: Long = System.currentTimeMillis(),

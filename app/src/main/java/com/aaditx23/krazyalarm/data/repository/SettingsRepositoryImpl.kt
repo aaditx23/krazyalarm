@@ -37,4 +37,10 @@ class SettingsRepositoryImpl(
     override suspend fun setDefaultVibrationIntensity(intensity: String) {
         settingsDataStore.setDefaultVibrationIntensity(intensity)
     }
+
+    override val defaultVolume: Flow<Int> = settingsDataStore.defaultVolume
+
+    override suspend fun setDefaultVolume(volume: Int) {
+        settingsDataStore.setDefaultVolume(volume)
+    }
 }
