@@ -42,4 +42,8 @@ sealed class Screen {
     object LEDPatterns : Screen() {
         override val route = "led_patterns"
     }
+
+    object VibrationPatterns : Screen() {
+        override val route = "vibration_patterns"
+    }
 }

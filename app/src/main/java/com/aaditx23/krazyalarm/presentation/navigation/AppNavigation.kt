@@ -61,6 +61,9 @@ fun AppNavigation(
                 },
                 onNavigateToLEDPatterns = {
                     navController.navigate(Screen.LEDPatterns.route)
+                },
+                onNavigateToVibrationPatterns = {
+                    navController.navigate(Screen.VibrationPatterns.route)
                 }
             )
         }
@@ -68,6 +71,16 @@ fun AppNavigation(
         composable(Screen.LEDPatterns.route) {
             val viewModel: SettingsViewModel = koinViewModel()
             com.aaditx23.krazyalarm.presentation.screen.settings.ledpatterns.LEDPatternsScreen(
+                viewModel = viewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.VibrationPatterns.route) {
+            val viewModel: SettingsViewModel = koinViewModel()
+            com.aaditx23.krazyalarm.presentation.screen.settings.vibrationpatterns.VibrationPatternsScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
                     navController.popBackStack()

@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.domain.models.FlashPattern
+import com.aaditx23.krazyalarm.domain.models.VibrationPattern
 import com.aaditx23.krazyalarm.presentation.screen.settings.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -17,7 +18,8 @@ import com.aaditx23.krazyalarm.presentation.screen.settings.components.*
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToLEDPatterns: () -> Unit = {}
+    onNavigateToLEDPatterns: () -> Unit = {},
+    onNavigateToVibrationPatterns: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -64,7 +66,8 @@ fun SettingsScreen(
 
             // Vibration Patterns Card
             VibrationPatternsCard(
-                onClick = { /* TODO: Navigate to vibration patterns screen */ }
+                selectedPattern = VibrationPattern.fromId(uiState.defaultVibrationPattern).displayName,
+                onClick = onNavigateToVibrationPatterns
             )
         }
     }

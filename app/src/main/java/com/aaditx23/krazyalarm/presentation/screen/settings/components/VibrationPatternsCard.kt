@@ -6,13 +6,13 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun VibrationPatternsCard(
+    selectedPattern: String = "Continuous",
     onClick: () -> Unit
 ) {
     SettingsNavigationCard(
         title = "Vibration Patterns",
-        subtitle = "Configure vibration patterns",
+        subtitle = selectedPattern,
         icon = Icons.Default.Vibration,
         onClick = onClick
     )
 }
-
