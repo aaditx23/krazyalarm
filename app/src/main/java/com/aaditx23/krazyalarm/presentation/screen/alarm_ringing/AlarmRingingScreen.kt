@@ -255,3 +255,4 @@ private fun getCurrentTime(): String {
     val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     return timeFormat.format(calendar.time)
 }
+

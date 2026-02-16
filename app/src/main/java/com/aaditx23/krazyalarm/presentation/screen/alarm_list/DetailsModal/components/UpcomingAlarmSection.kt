@@ -40,19 +40,9 @@ fun UpcomingAlarmSection(
                 set(Calendar.MILLISECOND, 0)
             }
 
-            // Debug logging
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-            println("DEBUG: Current time: ${dateFormat.format(now.time)}")
-            println("DEBUG: Alarm time: ${dateFormat.format(alarmTime.time)}")
-            println("DEBUG: Alarm hour: $hour, minute: $minute")
-            println("DEBUG: Now hour: ${now.get(Calendar.HOUR_OF_DAY)}, minute: ${now.get(Calendar.MINUTE)}")
-
             // Only move to next day if alarm time has already passed today
             if (alarmTime.timeInMillis < now.timeInMillis) {
                 alarmTime.add(Calendar.DAY_OF_YEAR, 1)
-                println("DEBUG: Alarm moved to next day")
-            } else {
-                println("DEBUG: Alarm is today")
             }
 
             formatScheduledTime(alarmTime.timeInMillis)
@@ -118,12 +108,6 @@ private fun formatScheduledTime(timeMillis: Long): String {
 
     val daysDifference = ((alarmDayStart.timeInMillis - todayStart.timeInMillis) / (1000 * 60 * 60 * 24)).toInt()
 
-    // Debug logging
-    val debugFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    println("DEBUG formatScheduledTime:")
-    println("  Today start: ${debugFormat.format(todayStart.time)}")
-    println("  Alarm day start: ${debugFormat.format(alarmDayStart.time)}")
-    println("  Days difference: $daysDifference")
 
     return when (daysDifference) {
         0 -> "Today"

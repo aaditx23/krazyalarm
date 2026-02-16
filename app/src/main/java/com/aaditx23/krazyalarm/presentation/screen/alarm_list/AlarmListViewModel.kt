@@ -77,8 +77,7 @@ class AlarmListViewModel(
         viewModelScope.launch {
             deleteAlarmUseCase(alarmId)
                 .onFailure { exception ->
-                    // TODO: Show error message to user
-                    println("Failed to delete alarm: ${exception.message}")
+                    _uiEvents.value = UiEvent.Error("Failed to delete alarm: ${exception.message}")
                 }
         }
     }

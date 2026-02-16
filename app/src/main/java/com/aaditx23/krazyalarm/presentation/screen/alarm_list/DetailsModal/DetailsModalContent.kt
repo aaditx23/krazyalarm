@@ -65,7 +65,8 @@ fun DetailsModalContent(
             AlarmEditEvent.SaveSuccess -> onSave()
             is AlarmEditEvent.SaveSuccessWithTime -> onSave()
             is AlarmEditEvent.SaveError -> {
-                // TODO: Show error message
+                // Error is already handled by showing in UI state
+                // Could add SnackBar here if needed
             }
         }
         onConsumeEvent()

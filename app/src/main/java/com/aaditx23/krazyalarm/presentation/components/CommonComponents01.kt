@@ -2,8 +2,12 @@ package com.aaditx23.krazyalarm.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -51,7 +55,18 @@ fun ErrorState(
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(16.dp)
         )
-        // TODO: Add retry button if onRetry is provided
+
+        onRetry?.let { retry ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = retry,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("Retry")
+            }
+        }
     }
 }
 
