@@ -1,5 +1,6 @@
 package com.aaditx23.krazyalarm.data.scheduler
 
+import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -54,7 +55,6 @@ class AlarmRingingService : Service() {
     private var vibrator: Vibrator? = null
     private var cameraManager: CameraManager? = null
     private var flashJob: Job? = null
-    private var vibrationJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -190,18 +190,16 @@ class AlarmRingingService : Service() {
     }
 
     private fun startVibration(alarm: Alarm) {
-        vibrator?.let { vibrator ->
-            vibrationJob = CoroutineScope(Dispatchers.Default).launch {
-                val pattern = VibrationPattern.fromId(alarm.vibrationPatternId)
-                val intensity = alarm.vibrationIntensity
+        vibrator?.let {
+            val pattern = VibrationPattern.fromId(alarm.vibrationPatternId)
+            val intensity = alarm.vibrationIntensity
 
-                when (pattern) {
-                    VibrationPattern.Continuous -> vibrateContinuous(intensity)
-                    VibrationPattern.Pulse -> vibratePulse(intensity)
-                    VibrationPattern.Escalating -> vibrateEscalating(intensity)
-                    VibrationPattern.Heartbeat -> vibrateHeartbeat(intensity)
-                    VibrationPattern.Wave -> vibrateWave(intensity)
-                }
+            when (pattern) {
+                VibrationPattern.Continuous -> vibrateContinuous(intensity)
+                VibrationPattern.Pulse -> vibratePulse(intensity)
+                VibrationPattern.Escalating -> vibrateEscalating(intensity)
+                VibrationPattern.Heartbeat -> vibrateHeartbeat(intensity)
+                VibrationPattern.Wave -> vibrateWave(intensity)
             }
         }
     }
@@ -231,58 +229,46 @@ class AlarmRingingService : Service() {
         }
     }
 
-    private suspend fun vibrateContinuous(intensity: VibrationIntensity) {
+    private fun vibrateContinuous(intensity: VibrationIntensity) {
         val amplitude = getVibrationAmplitude(intensity)
+        // Use a repeating pattern for continuous vibration
+        val pattern = longArrayOf(0, 1000) // Vibrate continuously in 1-second chunks
+        val amplitudes = intArrayOf(0, amplitude)
+
         vibrator?.vibrate(
-            VibrationEffect.createOneShot(
-                Long.MAX_VALUE,
-                amplitude
-            )
+            VibrationEffect.createWaveform(pattern, amplitudes, 0) // 0 = repeat from index 0
         )
     }
 
-    private suspend fun vibratePulse(intensity: VibrationIntensity) {
+    private fun vibratePulse(intensity: VibrationIntensity) {
         val amplitude = getVibrationAmplitude(intensity)
-        val pattern = longArrayOf(0, 500, 500, 500) // on, off, on, off
-        val amplitudes = intArrayOf(0, amplitude, 0, amplitude)
+        val pattern = longArrayOf(0, 500, 500) // on, off, repeat
+        val amplitudes = intArrayOf(0, amplitude, 0)
 
-        while (vibrationJob?.isActive == true) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, -1))
-            delay(1500) // Pattern duration
-        }
+        vibrator?.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, 0))
     }
 
-    private suspend fun vibrateEscalating(intensity: VibrationIntensity) {
-        val baseAmplitude = getVibrationAmplitude(intensity)
-        val pattern = longArrayOf(0, 200, 200, 200, 200, 200)
-        val amplitudes = intArrayOf(0, 50, 100, 150, 200, 255)
+    private fun vibrateEscalating(intensity: VibrationIntensity) {
+        val pattern = longArrayOf(0, 200, 200, 200, 200, 200, 200)
+        val amplitudes = intArrayOf(0, 50, 100, 150, 200, 255, 0)
 
-        while (vibrationJob?.isActive == true) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, -1))
-            delay(1400)
-        }
+        vibrator?.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, 0))
     }
 
-    private suspend fun vibrateHeartbeat(intensity: VibrationIntensity) {
+    private fun vibrateHeartbeat(intensity: VibrationIntensity) {
         val amplitude = getVibrationAmplitude(intensity)
-        val pattern = longArrayOf(0, 100, 100, 100, 400, 100)
-        val amplitudes = intArrayOf(0, amplitude, 0, amplitude, 0, amplitude)
+        val pattern = longArrayOf(0, 100, 100, 100, 400) // lub, pause, dub, long pause
+        val amplitudes = intArrayOf(0, amplitude, 0, amplitude, 0)
 
-        while (vibrationJob?.isActive == true) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, -1))
-            delay(800)
-        }
+        vibrator?.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, 0))
     }
 
-    private suspend fun vibrateWave(intensity: VibrationIntensity) {
+    private fun vibrateWave(intensity: VibrationIntensity) {
         val amplitude = getVibrationAmplitude(intensity)
-        val pattern = longArrayOf(0, 300, 200, 500, 200, 300)
-        val amplitudes = intArrayOf(0, amplitude, 0, amplitude, 0, amplitude)
+        val pattern = longArrayOf(0, 300, 200, 500, 200, 300, 200)
+        val amplitudes = intArrayOf(0, amplitude, 0, amplitude, 0, amplitude, 0)
 
-        while (vibrationJob?.isActive == true) {
-            vibrator?.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, -1))
-            delay(1500)
-        }
+        vibrator?.vibrate(VibrationEffect.createWaveform(pattern, amplitudes, 0))
     }
 
     private fun getVibrationAmplitude(intensity: VibrationIntensity): Int {
@@ -371,6 +357,14 @@ class AlarmRingingService : Service() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
+                    val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
+
+                    // Check if we can schedule exact alarms
+                    if (!alarmManager.canScheduleExactAlarms()) {
+                        Log.e(TAG, "Cannot schedule exact alarms: permission not granted")
+                        return@launch
+                    }
+
                     // Schedule snooze alarm
                     val snoozeTime = System.currentTimeMillis() + (alarm.snoozeDurationMinutes * 60 * 1000)
                     val snoozeIntent = Intent(this@AlarmRingingService, AlarmReceiver::class.java).apply {
@@ -384,20 +378,13 @@ class AlarmRingingService : Service() {
                         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                     )
 
-                    val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        alarmManager.setExactAndAllowWhileIdle(
-                            android.app.AlarmManager.RTC_WAKEUP,
-                            snoozeTime,
-                            pendingIntent
-                        )
-                    } else {
-                        alarmManager.setExact(
-                            android.app.AlarmManager.RTC_WAKEUP,
-                            snoozeTime,
-                            pendingIntent
-                        )
-                    }
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        snoozeTime,
+                        pendingIntent
+                    )
+                } catch (e: SecurityException) {
+                    Log.e(TAG, "SecurityException when scheduling snooze", e)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to schedule snooze", e)
                 }
@@ -417,8 +404,6 @@ class AlarmRingingService : Service() {
         mediaPlayer = null
 
         // Stop vibration
-        vibrationJob?.cancel()
-        vibrationJob = null
         vibrator?.cancel()
 
         // Stop flash

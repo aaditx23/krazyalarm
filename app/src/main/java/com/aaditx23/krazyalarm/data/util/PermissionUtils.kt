@@ -34,6 +34,14 @@ object PermissionUtils {
         }
     }
 
+    // Open app settings page
+    fun openAppSettings(context: Context) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.parse("package:${context.packageName}")
+        }
+        context.startActivity(intent)
+    }
+
     // Check camera permission for flash
     fun hasCameraPermission(context: Context): Boolean {
         return ContextCompat.checkSelfPermission(

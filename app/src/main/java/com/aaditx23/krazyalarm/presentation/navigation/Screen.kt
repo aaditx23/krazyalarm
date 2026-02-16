@@ -8,6 +8,10 @@ sealed class Screen {
     abstract val route: String
     open val arguments: List<NamedNavArgument> = emptyList()
 
+    object Permissions : Screen() {
+        override val route = "permissions"
+    }
+
     object AlarmList : Screen() {
         override val route = "alarm_list"
     }
