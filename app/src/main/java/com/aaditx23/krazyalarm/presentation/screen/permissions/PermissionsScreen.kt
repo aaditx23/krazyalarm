@@ -105,9 +105,9 @@ fun PermissionsScreen(
         }
     }
 
-    // Auto-navigate when essential permissions are granted (camera is optional)
-    LaunchedEffect(notificationPermissionGranted, alarmPermissionGranted) {
-        if (notificationPermissionGranted && alarmPermissionGranted) {
+    // Auto-navigate when all permissions are granted
+    LaunchedEffect(notificationPermissionGranted, alarmPermissionGranted, cameraPermissionGranted) {
+        if (notificationPermissionGranted && alarmPermissionGranted && cameraPermissionGranted) {
             onPermissionsGranted()
         }
     }
@@ -178,7 +178,23 @@ fun PermissionsScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-
+            PermissionCard(
+                icon = Icons.Default.FlashOn,
+                title = "Camera Permission",
+                description = "Required to use LED flash patterns as visual alerts when alarms ring",
+                isGranted = cameraPermissionGranted,
+                onRequestClick = {
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                },
+                onOpenSettings = {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                    }
+                    settingsLauncher.launch(intent)
+                },
+                showRationale = showCameraRationale
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             // Alarm Permission Card
             PermissionCard(
                 icon = Icons.Default.Schedule,
@@ -204,31 +220,10 @@ fun PermissionsScreen(
                 showRationale = false
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Camera Permission Card (Optional)
-            PermissionCard(
-                icon = Icons.Default.FlashOn,
-                title = "Camera Permission (Optional)",
-                description = "Allows the alarm to use LED flash patterns as visual alerts. You can skip this and grant it later from Settings if needed",
-                isGranted = cameraPermissionGranted,
-                onRequestClick = {
-                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                },
-                onOpenSettings = {
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                        data = Uri.parse("package:${context.packageName}")
-                    }
-                    settingsLauncher.launch(intent)
-                },
-                showRationale = showCameraRationale,
-                isOptional = true
-            )
-
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Continue button
-            if (notificationPermissionGranted && alarmPermissionGranted) {
+            // Continue button - only shown when all permissions are granted
+            if (notificationPermissionGranted && alarmPermissionGranted && cameraPermissionGranted) {
                 Button(
                     onClick = onPermissionsGranted,
                     modifier = Modifier
@@ -272,8 +267,7 @@ fun PermissionCard(
     isGranted: Boolean,
     onRequestClick: () -> Unit,
     onOpenSettings: () -> Unit,
-    showRationale: Boolean,
-    isOptional: Boolean = false
+    showRationale: Boolean
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),

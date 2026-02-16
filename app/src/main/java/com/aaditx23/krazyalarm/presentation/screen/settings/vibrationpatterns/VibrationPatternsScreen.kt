@@ -34,7 +34,7 @@ fun VibrationPatternsScreen(
 
     val selectedPattern = VibrationPattern.fromId(uiState.defaultVibrationPattern)
     var playingPatternId by remember { mutableStateOf<String?>(null) }
-    var previewDuration by remember { mutableStateOf(3) }
+    var previewDuration by remember { mutableIntStateOf(3) }
 
     Scaffold(
         topBar = {
@@ -119,6 +119,8 @@ private suspend fun playVibrationPattern(context: Context, pattern: VibrationPat
                     @Suppress("DEPRECATION")
                     vibrator.vibrate(durationSeconds * 1000L)
                 }
+                // Wait for the vibration to complete before exiting
+                delay(durationSeconds * 1000L)
             }
             VibrationPattern.Pulse -> {
                 while (System.currentTimeMillis() < endTime) {
