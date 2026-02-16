@@ -22,12 +22,15 @@ import com.aaditx23.krazyalarm.domain.models.VibrationPattern
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.ActionButtons
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.AlarmNameCard
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.DaySelectorSection
+import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.FlashPatternCard
+import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.FlashPatternSelectionDialog
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.ScheduleAlarmButton
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.SoundCard
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.TimeDisplaySection
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.TimePickerDialog
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.UpcomingAlarmSection
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.VibrateCard
+import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.VibrationPatternCard
+import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.VibrationPatternSelectionDialog
 
 @Composable
 fun DetailsModalContent(
@@ -53,6 +56,8 @@ fun DetailsModalContent(
     onUpdateRingtoneUri: (String?) -> Unit,
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
+    var showFlashPatternDialog by remember { mutableStateOf(false) }
+    var showVibrationPatternDialog by remember { mutableStateOf(false) }
 
     // Handle events
     events?.let { event ->
@@ -136,15 +141,19 @@ fun DetailsModalContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Vibrate Card
-        VibrateCard(
-            isVibrationEnabled = state.vibrationPattern == VibrationPattern.Continuous,
-            onVibrateChange = { enabled ->
-                onUpdateVibrationPattern(
-                    if (enabled) VibrationPattern.Continuous
-                    else VibrationPattern.Pulse
-                )
-            },
+        // Flash Pattern Card
+        FlashPatternCard(
+            patternName = state.flashPattern.displayName,
+            onPatternClick = { showFlashPatternDialog = true },
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Vibration Pattern Card
+        VibrationPatternCard(
+            patternName = state.vibrationPattern.displayName,
+            onPatternClick = { showVibrationPatternDialog = true },
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
@@ -171,6 +180,24 @@ fun DetailsModalContent(
             onHourChange = { onUpdateHour(it) },
             onMinuteChange = { onUpdateMinute(it) },
             onDismiss = { showTimePicker = false }
+        )
+    }
+
+    // Flash Pattern Selection Dialog
+    if (showFlashPatternDialog) {
+        FlashPatternSelectionDialog(
+            selectedPattern = state.flashPattern,
+            onPatternSelected = onUpdateFlashPattern,
+            onDismiss = { showFlashPatternDialog = false }
+        )
+    }
+
+    // Vibration Pattern Selection Dialog
+    if (showVibrationPatternDialog) {
+        VibrationPatternSelectionDialog(
+            selectedPattern = state.vibrationPattern,
+            onPatternSelected = onUpdateVibrationPattern,
+            onDismiss = { showVibrationPatternDialog = false }
         )
     }
 }

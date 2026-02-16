@@ -109,6 +109,9 @@ private suspend fun playVibrationPattern(context: Context, pattern: VibrationPat
         val endTime = System.currentTimeMillis() + (durationSeconds * 1000L)
 
         when (pattern) {
+            VibrationPattern.Off -> {
+                // Do nothing - no vibration
+            }
             VibrationPattern.Continuous -> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     vibrator.vibrate(VibrationEffect.createOneShot(durationSeconds * 1000L, VibrationEffect.DEFAULT_AMPLITUDE))

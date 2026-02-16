@@ -104,6 +104,7 @@ fun VibrationPatternCard(
 
 private fun getPatternDescription(pattern: VibrationPattern): String {
     return when (pattern) {
+        VibrationPattern.Off -> "No vibration"
         VibrationPattern.Continuous -> "Steady continuous vibration"
         VibrationPattern.Pulse -> "Regular pulsing pattern"
         VibrationPattern.Escalating -> "Gradually increasing intensity"

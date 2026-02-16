@@ -13,6 +13,7 @@ import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmsUseCase
 import com.aaditx23.krazyalarm.domain.usecase.ToggleAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.UpdateAlarmUseCase
+import com.aaditx23.krazyalarm.domain.repository.SettingsRepository
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.AlarmEditEvent
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.AlarmEditState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class AlarmListViewModel(
@@ -29,7 +31,8 @@ class AlarmListViewModel(
     private val deleteAlarmUseCase: DeleteAlarmUseCase,
     private val getAlarmByIdUseCase: GetAlarmByIdUseCase,
     private val createAlarmUseCase: CreateAlarmUseCase,
-    private val updateAlarmUseCase: UpdateAlarmUseCase
+    private val updateAlarmUseCase: UpdateAlarmUseCase,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UiState(isLoading = true))
@@ -82,14 +85,24 @@ class AlarmListViewModel(
 
     fun startCreateAlarm() {
         editingAlarmId = null
-        val currentTime = java.util.Calendar.getInstance()
-        // Add 1 minute to current time
-        currentTime.add(java.util.Calendar.MINUTE, 1)
+        viewModelScope.launch {
+            val currentTime = java.util.Calendar.getInstance()
+            // Add 1 minute to current time
+            currentTime.add(java.util.Calendar.MINUTE, 1)
 
-        _editState.value = AlarmEditState(
-            hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
-            minute = currentTime.get(java.util.Calendar.MINUTE)
-        )
+            // Load default patterns from settings
+            val defaultFlashPatternId = settingsRepository.defaultFlashPattern.first()
+            val defaultVibrationPatternId = settingsRepository.defaultVibrationPattern.first()
+            val defaultSnoozeDuration = settingsRepository.snoozeDefaultMinutes.first()
+
+            _editState.value = AlarmEditState(
+                hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
+                minute = currentTime.get(java.util.Calendar.MINUTE),
+                flashPattern = FlashPattern.fromId(defaultFlashPatternId),
+                vibrationPattern = VibrationPattern.fromId(defaultVibrationPatternId),
+                snoozeDurationMinutes = defaultSnoozeDuration
+            )
+        }
     }
 
     fun startEditAlarm(alarmId: Long) {

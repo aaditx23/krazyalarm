@@ -35,6 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import java.io.IOException
+import androidx.core.net.toUri
 
 class AlarmRingingService : Service() {
 
@@ -170,7 +171,7 @@ class AlarmRingingService : Service() {
     private fun startRingtone(alarm: Alarm) {
         try {
             mediaPlayer = MediaPlayer().apply {
-                val ringtoneUri = alarm.ringtoneUri?.let { android.net.Uri.parse(it) }
+                val ringtoneUri = alarm.ringtoneUri?.toUri()
                     ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
 
                 setDataSource(this@AlarmRingingService, ringtoneUri)
@@ -195,6 +196,7 @@ class AlarmRingingService : Service() {
             val intensity = alarm.vibrationIntensity
 
             when (pattern) {
+                VibrationPattern.Off -> { /* Do nothing - no vibration */ }
                 VibrationPattern.Continuous -> vibrateContinuous(intensity)
                 VibrationPattern.Pulse -> vibratePulse(intensity)
                 VibrationPattern.Escalating -> vibrateEscalating(intensity)

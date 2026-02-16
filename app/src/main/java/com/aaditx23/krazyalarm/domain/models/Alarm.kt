@@ -61,6 +61,7 @@ sealed class FlashPattern(val id: String, val displayName: String) {
 }
 
 sealed class VibrationPattern(val id: String, val displayName: String) {
+    object Off : VibrationPattern("OFF", "Off")
     object Continuous : VibrationPattern("CONTINUOUS", "Continuous")
     object Pulse : VibrationPattern("PULSE", "Pulse")
     object Escalating : VibrationPattern("ESCALATING", "Escalating")
@@ -70,6 +71,7 @@ sealed class VibrationPattern(val id: String, val displayName: String) {
     companion object {
         fun fromId(id: String?): VibrationPattern {
             return when (id) {
+                "OFF" -> Off
                 "CONTINUOUS" -> Continuous
                 "PULSE" -> Pulse
                 "ESCALATING" -> Escalating
@@ -79,6 +81,6 @@ sealed class VibrationPattern(val id: String, val displayName: String) {
             }
         }
 
-        fun getAll(): List<VibrationPattern> = listOf(Continuous, Pulse, Escalating, Heartbeat, Wave)
+        fun getAll(): List<VibrationPattern> = listOf(Off, Continuous, Pulse, Escalating, Heartbeat, Wave)
     }
 }
