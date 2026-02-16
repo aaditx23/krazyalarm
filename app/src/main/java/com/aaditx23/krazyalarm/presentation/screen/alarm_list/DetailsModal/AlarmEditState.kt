@@ -17,7 +17,8 @@ data class AlarmEditState(
     val vibrationIntensity: VibrationIntensity = VibrationIntensity.MEDIUM,
     val snoozeDurationMinutes: Int = 10,
     val ringtoneUri: String? = null,
-    val ringtoneName: String = "Default"
+    val ringtoneName: String = "Default",
+    val scheduledDate: Long? = null // Specific date in millis for one-time alarms (when days == 0)
 )
 
 sealed class AlarmEditEvent {

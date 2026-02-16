@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.domain.models.Alarm
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @SuppressLint("DefaultLocale")
 @Composable
@@ -67,11 +69,17 @@ fun AlarmItemCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
-                        // Days of week
-                        val daysText = getDaysOfWeekText(alarm.days)
-                        if (daysText.isNotEmpty()) {
+                        // Show scheduled date or days of week
+                        val displayText = if (alarm.scheduledDate != null) {
+                            val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault())
+                            "Scheduled for ${dateFormat.format(alarm.scheduledDate)}"
+                        } else {
+                            getDaysOfWeekText(alarm.days)
+                        }
+
+                        if (displayText.isNotEmpty()) {
                             Text(
-                                text = daysText,
+                                text = displayText,
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Normal
                             )

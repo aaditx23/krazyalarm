@@ -98,6 +98,7 @@ class AlarmRepositoryImpl(
             vibrationPatternId = vibrationPatternId,
             vibrationIntensity = vibrationIntensity.name,
             snoozeDurationMinutes = snoozeDurationMinutes,
+            scheduledDate = scheduledDate,
             createdAt = createdAt,
             updatedAt = System.currentTimeMillis()
         )
@@ -116,6 +117,7 @@ class AlarmRepositoryImpl(
             vibrationPatternId = vibrationPatternId,
             vibrationIntensity = VibrationIntensity.valueOf(vibrationIntensity),
             snoozeDurationMinutes = snoozeDurationMinutes,
+            scheduledDate = scheduledDate,
             createdAt = createdAt,
             updatedAt = updatedAt
         )

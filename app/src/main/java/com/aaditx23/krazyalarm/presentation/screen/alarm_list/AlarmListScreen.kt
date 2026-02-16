@@ -335,15 +335,40 @@ fun AlarmListScreen(
     }
 
     if (uiState.showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = editState.scheduledDate ?: System.currentTimeMillis()
+        )
+
         DatePickerDialog(
             onDismissRequest = { viewModel.showDatePicker(false) },
             confirmButton = {
-                TextButton(onClick = { viewModel.showDatePicker(false) }) {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { selectedMillis ->
+                        // Set the date at the alarm's time
+                        val calendar = java.util.Calendar.getInstance().apply {
+                            timeInMillis = selectedMillis
+                            set(java.util.Calendar.HOUR_OF_DAY, editState.hour)
+                            set(java.util.Calendar.MINUTE, editState.minute)
+                            set(java.util.Calendar.SECOND, 0)
+                            set(java.util.Calendar.MILLISECOND, 0)
+                        }
+
+                        viewModel.updateScheduledDate(calendar.timeInMillis)
+                        // Clear recurring days when scheduling for specific date
+                        viewModel.updateDays(0)
+                    }
+                    viewModel.showDatePicker(false)
+                }) {
                     Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.showDatePicker(false) }) {
+                    Text("Cancel")
                 }
             }
         ) {
-            DatePicker(state = rememberDatePickerState())
+            DatePicker(state = datePickerState)
         }
     }
 }

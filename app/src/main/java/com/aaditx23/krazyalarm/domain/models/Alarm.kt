@@ -12,6 +12,7 @@ data class Alarm(
     val vibrationPatternId: String? = null,
     val vibrationIntensity: VibrationIntensity = VibrationIntensity.MEDIUM,
     val snoozeDurationMinutes: Int = 10,
+    val scheduledDate: Long? = null, // Specific date in millis for one-time alarms
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -26,7 +27,8 @@ data class AlarmInput(
     val flashPatternId: String? = null,
     val vibrationPatternId: String? = null,
     val vibrationIntensity: VibrationIntensity = VibrationIntensity.MEDIUM,
-    val snoozeDurationMinutes: Int = 10
+    val snoozeDurationMinutes: Int = 10,
+    val scheduledDate: Long? = null
 )
 
 enum class VibrationIntensity {

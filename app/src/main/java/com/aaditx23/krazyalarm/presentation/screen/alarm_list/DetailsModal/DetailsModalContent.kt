@@ -106,11 +106,13 @@ fun DetailsModalContent(
             UpcomingAlarmSection(
                 hour = state.hour,
                 minute = state.minute,
-                days = state.days
+                days = state.days,
+                scheduledDate = state.scheduledDate
             )
 
             ScheduleAlarmButton(
-                onScheduleClick = onScheduleClick
+                onScheduleClick = onScheduleClick,
+                hasScheduledDate = state.scheduledDate != null
             )
         }
 

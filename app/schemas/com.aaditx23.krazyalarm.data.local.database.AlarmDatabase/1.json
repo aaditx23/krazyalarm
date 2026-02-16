@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "f9ce03e216d40f4082e1abb6c4bec048",
+    "identityHash": "48dee64445c718c2626ea85cfcb44cfc",
     "entities": [
       {
         "tableName": "alarms",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `hour` INTEGER NOT NULL, `minute` INTEGER NOT NULL, `days` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `label` TEXT, `ringtoneUri` TEXT, `flashPatternId` TEXT, `vibrationPatternId` TEXT, `vibrationIntensity` TEXT NOT NULL, `snoozeDurationMinutes` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `hour` INTEGER NOT NULL, `minute` INTEGER NOT NULL, `days` INTEGER NOT NULL, `enabled` INTEGER NOT NULL, `label` TEXT, `ringtoneUri` TEXT, `flashPatternId` TEXT, `vibrationPatternId` TEXT, `vibrationIntensity` TEXT NOT NULL, `snoozeDurationMinutes` INTEGER NOT NULL, `scheduledDate` INTEGER, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -71,6 +71,11 @@
             "notNull": true
           },
           {
+            "fieldPath": "scheduledDate",
+            "columnName": "scheduledDate",
+            "affinity": "INTEGER"
+          },
+          {
             "fieldPath": "createdAt",
             "columnName": "createdAt",
             "affinity": "INTEGER",
@@ -104,7 +109,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'f9ce03e216d40f4082e1abb6c4bec048')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '48dee64445c718c2626ea85cfcb44cfc')"
     ]
   }
 }

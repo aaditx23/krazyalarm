@@ -83,6 +83,9 @@ class AlarmListViewModel(
     fun startCreateAlarm() {
         editingAlarmId = null
         val currentTime = java.util.Calendar.getInstance()
+        // Add 1 minute to current time
+        currentTime.add(java.util.Calendar.MINUTE, 1)
+
         _editState.value = AlarmEditState(
             hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
             minute = currentTime.get(java.util.Calendar.MINUTE)
@@ -113,7 +116,8 @@ class AlarmListViewModel(
                         vibrationPattern = VibrationPattern.fromId(alarm.vibrationPatternId),
                         vibrationIntensity = alarm.vibrationIntensity,
                         snoozeDurationMinutes = alarm.snoozeDurationMinutes,
-                        ringtoneUri = alarm.ringtoneUri
+                        ringtoneUri = alarm.ringtoneUri,
+                        scheduledDate = alarm.scheduledDate
                     )
                 } else {
                     _editEvents.value = AlarmEditEvent.SaveError("Alarm not found")
@@ -133,7 +137,11 @@ class AlarmListViewModel(
     }
 
     fun updateDays(days: Int) {
-        _editState.value = _editState.value.copy(days = days)
+        _editState.value = _editState.value.copy(
+            days = days,
+            // Clear scheduled date when selecting recurring days
+            scheduledDate = if (days != 0) null else _editState.value.scheduledDate
+        )
     }
 
     fun updateEnabled(enabled: Boolean) {
@@ -168,6 +176,10 @@ class AlarmListViewModel(
         _editState.value = _editState.value.copy(ringtoneName = ringtoneName)
     }
 
+    fun updateScheduledDate(dateMillis: Long?) {
+        _editState.value = _editState.value.copy(scheduledDate = dateMillis)
+    }
+
     fun saveAlarm() {
         viewModelScope.launch {
             val state = _editState.value
@@ -181,7 +193,8 @@ class AlarmListViewModel(
                 flashPatternId = state.flashPattern.id,
                 vibrationPatternId = state.vibrationPattern.id,
                 vibrationIntensity = state.vibrationIntensity,
-                snoozeDurationMinutes = state.snoozeDurationMinutes
+                snoozeDurationMinutes = state.snoozeDurationMinutes,
+                scheduledDate = state.scheduledDate
             )
 
             try {

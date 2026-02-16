@@ -16,7 +16,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ScheduleAlarmButton(
-    onScheduleClick: () -> Unit
+    onScheduleClick: () -> Unit,
+    hasScheduledDate: Boolean = false
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -25,12 +26,12 @@ fun ScheduleAlarmButton(
     ) {
         Icon(
             imageVector = Icons.Outlined.Notifications,
-            contentDescription = "Schedule alarm",
+            contentDescription = if (hasScheduledDate) "Change scheduled date" else "Schedule alarm",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(24.dp)
         )
         Text(
-            text = "Schedule alarm",
+            text = if (hasScheduledDate) "Change date" else "Schedule alarm",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
