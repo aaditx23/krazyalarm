@@ -82,7 +82,11 @@ class AlarmListViewModel(
 
     fun startCreateAlarm() {
         editingAlarmId = null
-        _editState.value = AlarmEditState()
+        val currentTime = java.util.Calendar.getInstance()
+        _editState.value = AlarmEditState(
+            hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
+            minute = currentTime.get(java.util.Calendar.MINUTE)
+        )
     }
 
     fun startEditAlarm(alarmId: Long) {
@@ -158,6 +162,10 @@ class AlarmListViewModel(
 
     fun updateRingtoneUri(ringtoneUri: String?) {
         _editState.value = _editState.value.copy(ringtoneUri = ringtoneUri)
+    }
+
+    fun updateRingtoneName(ringtoneName: String) {
+        _editState.value = _editState.value.copy(ringtoneName = ringtoneName)
     }
 
     fun saveAlarm() {

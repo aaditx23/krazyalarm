@@ -7,7 +7,7 @@ import com.aaditx23.krazyalarm.domain.models.VibrationPattern
 data class AlarmEditState(
     val isLoading: Boolean = false,
     val isEditMode: Boolean = false,
-    val hour: Int = 8,
+    val hour: Int = 0,
     val minute: Int = 0,
     val days: Int = 0, // bitmask for days
     val enabled: Boolean = true,
@@ -16,7 +16,8 @@ data class AlarmEditState(
     val vibrationPattern: VibrationPattern = VibrationPattern.Continuous,
     val vibrationIntensity: VibrationIntensity = VibrationIntensity.MEDIUM,
     val snoozeDurationMinutes: Int = 10,
-    val ringtoneUri: String? = null
+    val ringtoneUri: String? = null,
+    val ringtoneName: String = "Default"
 )
 
 sealed class AlarmEditEvent {

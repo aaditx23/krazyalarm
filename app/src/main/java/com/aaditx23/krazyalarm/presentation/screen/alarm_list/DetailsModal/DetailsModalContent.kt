@@ -127,7 +127,7 @@ fun DetailsModalContent(
 
         // Sound Card
         SoundCard(
-            soundName = "Default (Gentle Warning)",
+            soundName = state.ringtoneName,
             onSoundClick = onSoundClick,
             modifier = Modifier.padding(horizontal = 16.dp)
         )

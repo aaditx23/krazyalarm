@@ -58,6 +58,7 @@ import kotlinx.coroutines.launch
 fun AlarmListScreen(
     viewModel: AlarmListViewModel
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val editState by viewModel.editState.collectAsState()
@@ -72,6 +73,27 @@ fun AlarmListScreen(
         if (result.resultCode == android.app.Activity.RESULT_OK) {
             val uri = result.data?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
             viewModel.updateRingtoneUri(uri?.toString())
+
+            // Get ringtone name
+            val ringtoneName = if (uri != null) {
+                val ringtone = android.media.RingtoneManager.getRingtone(context, uri)
+                val title = ringtone?.getTitle(context) ?: "Unknown"
+
+                // Check if it's the default system alarm
+                val defaultUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                // Only add (Default) suffix if title doesn't already contain "Default" and it IS the default URI
+                if (uri == defaultUri && !title.contains("Default", ignoreCase = true)) {
+                    "$title (Default)"
+                } else {
+                    title
+                }
+            } else {
+                // User selected "None" or cancelled - get default alarm ringtone name
+                val defaultUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                val ringtone = android.media.RingtoneManager.getRingtone(context, defaultUri)
+                ringtone?.getTitle(context) ?: "System Default"
+            }
+            viewModel.updateRingtoneName(ringtoneName)
         }
     }
 
@@ -100,6 +122,36 @@ fun AlarmListScreen(
                 }
             }
             viewModel.consumeUiEvent()
+        }
+    }
+
+    // Resolve ringtone name when editing an existing alarm or creating a new one
+    LaunchedEffect(editState.ringtoneUri, editState.isEditMode, uiState.showSheet) {
+        if (uiState.showSheet && editState.ringtoneName == "Default") {
+            try {
+                val uri = if (editState.ringtoneUri != null) {
+                    android.net.Uri.parse(editState.ringtoneUri)
+                } else {
+                    // No URI means use system default
+                    android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                }
+
+                val ringtone = android.media.RingtoneManager.getRingtone(context, uri)
+                val title = ringtone?.getTitle(context) ?: "System Default"
+
+                // Check if it's the default system alarm
+                val defaultUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+                // Only add (Default) suffix if title doesn't already contain "Default" and it IS the default
+                val name = if ((editState.ringtoneUri == null || uri == defaultUri) && !title.contains("Default", ignoreCase = true)) {
+                    "$title (Default)"
+                } else {
+                    title
+                }
+
+                viewModel.updateRingtoneName(name)
+            } catch (e: Exception) {
+                // If we can't get the name, keep the default
+            }
         }
     }
 
