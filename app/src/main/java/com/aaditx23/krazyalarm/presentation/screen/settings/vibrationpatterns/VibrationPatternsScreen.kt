@@ -33,7 +33,7 @@ fun VibrationPatternsScreen(
     val scope = rememberCoroutineScope()
 
     val selectedPattern = VibrationPattern.fromId(uiState.defaultVibrationPattern)
-    var isPlaying by remember { mutableStateOf(false) }
+    var playingPatternId by remember { mutableStateOf<String?>(null) }
     var previewDuration by remember { mutableStateOf(3) }
 
     Scaffold(
@@ -76,20 +76,20 @@ fun VibrationPatternsScreen(
                 VibrationPatternCard(
                     pattern = pattern,
                     isSelected = selectedPattern.id == pattern.id,
-                    isPlaying = isPlaying && selectedPattern.id == pattern.id,
+                    isPlaying = playingPatternId == pattern.id,
                     onSelect = {
                         viewModel.updateVibrationPattern(pattern.id)
                     },
                     onPreview = {
-                        if (!isPlaying) {
-                            isPlaying = true
+                        if (playingPatternId == null) {
+                            playingPatternId = pattern.id
                             scope.launch {
                                 playVibrationPattern(context, pattern, previewDuration)
-                                isPlaying = false
+                                playingPatternId = null
                             }
                         }
                     },
-                    enabled = !isPlaying
+                    enabled = playingPatternId == null
                 )
             }
         }

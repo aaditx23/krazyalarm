@@ -33,7 +33,7 @@ fun LEDPatternsScreen(
     val scope = rememberCoroutineScope()
 
     val selectedPattern = FlashPattern.fromId(uiState.defaultFlashPattern)
-    var isPlaying by remember { mutableStateOf(false) }
+    var playingPatternId by remember { mutableStateOf<String?>(null) }
     var previewDuration by remember { mutableStateOf(3) }
     val hasCameraPermission = remember {
         ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
@@ -79,20 +79,20 @@ fun LEDPatternsScreen(
                 FlashPatternCard(
                     pattern = pattern,
                     isSelected = selectedPattern.id == pattern.id,
-                    isPlaying = isPlaying && selectedPattern.id == pattern.id,
+                    isPlaying = playingPatternId == pattern.id,
                     onSelect = {
                         viewModel.updateFlashPattern(pattern.id)
                     },
                     onPreview = {
-                        if (!isPlaying && hasCameraPermission) {
-                            isPlaying = true
+                        if (playingPatternId == null && hasCameraPermission) {
+                            playingPatternId = pattern.id
                             scope.launch {
                                 playFlashPattern(context, pattern, previewDuration)
-                                isPlaying = false
+                                playingPatternId = null
                             }
                         }
                     },
-                    enabled = !isPlaying
+                    enabled = playingPatternId == null
                 )
             }
 
