@@ -1,7 +1,6 @@
 package com.aaditx23.krazyalarm.presentation.screen.permissions
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -21,12 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aaditx23.krazyalarm.data.util.PermissionUtils
 
 @Composable
@@ -42,9 +41,15 @@ fun PermissionsScreen(
     var alarmPermissionGranted by remember {
         mutableStateOf(PermissionUtils.canScheduleExactAlarms(context))
     }
+    var cameraPermissionGranted by remember {
+        mutableStateOf(
+            context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        )
+    }
 
     // Check if we should show rationale for notification permission
     var showNotificationRationale by remember { mutableStateOf(false) }
+    var showCameraRationale by remember { mutableStateOf(false) }
 
     // Notification permission launcher
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -56,6 +61,16 @@ fun PermissionsScreen(
         }
     }
 
+    // Camera permission launcher
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        cameraPermissionGranted = isGranted
+        if (!isGranted) {
+            showCameraRationale = true
+        }
+    }
+
     // Settings launcher to recheck permissions when user returns
     val settingsLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -63,12 +78,14 @@ fun PermissionsScreen(
         // Recheck permissions when returning from settings
         notificationPermissionGranted = PermissionUtils.hasNotificationPermission(context)
         alarmPermissionGranted = PermissionUtils.canScheduleExactAlarms(context)
+        cameraPermissionGranted = context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED
     }
 
     // Check permissions when screen first appears
     LaunchedEffect(Unit) {
         notificationPermissionGranted = PermissionUtils.hasNotificationPermission(context)
         alarmPermissionGranted = PermissionUtils.canScheduleExactAlarms(context)
+        cameraPermissionGranted = context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED
     }
 
     // Recheck permissions when app comes to foreground
@@ -77,6 +94,7 @@ fun PermissionsScreen(
             if (event == Lifecycle.Event.ON_RESUME) {
                 notificationPermissionGranted = PermissionUtils.hasNotificationPermission(context)
                 alarmPermissionGranted = PermissionUtils.canScheduleExactAlarms(context)
+                cameraPermissionGranted = context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED
             }
         }
 
@@ -87,7 +105,7 @@ fun PermissionsScreen(
         }
     }
 
-    // Auto-navigate when all permissions are granted
+    // Auto-navigate when essential permissions are granted (camera is optional)
     LaunchedEffect(notificationPermissionGranted, alarmPermissionGranted) {
         if (notificationPermissionGranted && alarmPermissionGranted) {
             onPermissionsGranted()
@@ -186,6 +204,27 @@ fun PermissionsScreen(
                 showRationale = false
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Camera Permission Card (Optional)
+            PermissionCard(
+                icon = Icons.Default.FlashOn,
+                title = "Camera Permission (Optional)",
+                description = "Allows the alarm to use LED flash patterns as visual alerts. You can skip this and grant it later from Settings if needed",
+                isGranted = cameraPermissionGranted,
+                onRequestClick = {
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                },
+                onOpenSettings = {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                    }
+                    settingsLauncher.launch(intent)
+                },
+                showRationale = showCameraRationale,
+                isOptional = true
+            )
+
             Spacer(modifier = Modifier.height(32.dp))
 
             // Continue button
@@ -233,7 +272,8 @@ fun PermissionCard(
     isGranted: Boolean,
     onRequestClick: () -> Unit,
     onOpenSettings: () -> Unit,
-    showRationale: Boolean
+    showRationale: Boolean,
+    isOptional: Boolean = false
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),

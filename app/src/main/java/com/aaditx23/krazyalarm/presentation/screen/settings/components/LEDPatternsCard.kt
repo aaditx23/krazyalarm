@@ -6,13 +6,13 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun LEDPatternsCard(
+    selectedPattern: String = "No Flash",
     onClick: () -> Unit
 ) {
     SettingsNavigationCard(
         title = "LED Patterns",
-        subtitle = "Configure flash patterns",
+        subtitle = selectedPattern,
         icon = Icons.Default.FlashOn,
         onClick = onClick
     )
 }
-

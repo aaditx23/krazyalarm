@@ -58,6 +58,19 @@ fun AppNavigation(
                 viewModel = viewModel,
                 onNavigateBack = {
                     navController.popBackStack()
+                },
+                onNavigateToLEDPatterns = {
+                    navController.navigate(Screen.LEDPatterns.route)
+                }
+            )
+        }
+
+        composable(Screen.LEDPatterns.route) {
+            val viewModel: SettingsViewModel = koinViewModel()
+            com.aaditx23.krazyalarm.presentation.screen.settings.ledpatterns.LEDPatternsScreen(
+                viewModel = viewModel,
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

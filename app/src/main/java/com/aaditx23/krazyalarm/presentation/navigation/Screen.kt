@@ -38,4 +38,8 @@ sealed class Screen {
     object Settings : Screen() {
         override val route = "settings"
     }
+
+    object LEDPatterns : Screen() {
+        override val route = "led_patterns"
+    }
 }
