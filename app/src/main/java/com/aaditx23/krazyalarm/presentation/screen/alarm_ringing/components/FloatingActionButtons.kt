@@ -24,8 +24,8 @@ fun FloatingActionButtons(
     val density = LocalDensity.current
 
     // Convert button dimensions to pixels for calculation
-    val buttonWidthPx = with(density) { 200.dp.toPx() }
-    val buttonHeightPx = with(density) { 64.dp.toPx() }
+    val buttonWidthPx = with(density) { 140.dp.toPx() }
+    val buttonHeightPx = with(density) { 48.dp.toPx() }
 
     val maxX = screenWidthPx - buttonWidthPx
     val maxY = screenHeightPx - buttonHeightPx
@@ -73,24 +73,54 @@ fun FloatingActionButtons(
             snoozeButtonX += snoozeVelocityX
             snoozeButtonY += snoozeVelocityY
 
-            // Check collision between buttons
+            // Check collision between buttons (AABB collision)
             val collisionX = dismissButtonX < snoozeButtonX + buttonWidthPx &&
                     dismissButtonX + buttonWidthPx > snoozeButtonX
             val collisionY = dismissButtonY < snoozeButtonY + buttonHeightPx &&
                     dismissButtonY + buttonHeightPx > snoozeButtonY
 
             if (collisionX && collisionY) {
-                // Collision detected - reverse velocities and separate buttons
-                dismissVelocityX = -dismissVelocityX
-                dismissVelocityY = -dismissVelocityY
-                snoozeVelocityX = -snoozeVelocityX
-                snoozeVelocityY = -snoozeVelocityY
+                // Calculate centers of both buttons
+                val dismissCenterX = dismissButtonX + buttonWidthPx / 2
+                val dismissCenterY = dismissButtonY + buttonHeightPx / 2
+                val snoozeCenterX = snoozeButtonX + buttonWidthPx / 2
+                val snoozeCenterY = snoozeButtonY + buttonHeightPx / 2
 
-                // Push buttons apart slightly to prevent sticking
-                dismissButtonX += dismissVelocityX * 2
-                dismissButtonY += dismissVelocityY * 2
-                snoozeButtonX += snoozeVelocityX * 2
-                snoozeButtonY += snoozeVelocityY * 2
+                // Calculate collision normal (direction from dismiss to snooze)
+                val dx = snoozeCenterX - dismissCenterX
+                val dy = snoozeCenterY - dismissCenterY
+                val distance = kotlin.math.sqrt(dx * dx + dy * dy)
+
+                if (distance > 0) {
+                    // Normalize the collision normal
+                    val nx = dx / distance
+                    val ny = dy / distance
+
+                    // Calculate relative velocity
+                    val relVelX = dismissVelocityX - snoozeVelocityX
+                    val relVelY = dismissVelocityY - snoozeVelocityY
+
+                    // Calculate relative velocity along collision normal
+                    val relVelAlongNormal = relVelX * nx + relVelY * ny
+
+                    // Only resolve if objects are moving towards each other
+                    if (relVelAlongNormal > 0) {
+                        // Elastic collision - swap velocity components along normal
+                        dismissVelocityX -= relVelAlongNormal * nx
+                        dismissVelocityY -= relVelAlongNormal * ny
+                        snoozeVelocityX += relVelAlongNormal * nx
+                        snoozeVelocityY += relVelAlongNormal * ny
+                    }
+
+                    // Separate buttons to prevent overlap
+                    val overlap = (buttonWidthPx / 2 + buttonWidthPx / 2) - distance + 2f
+                    if (overlap > 0) {
+                        dismissButtonX -= nx * overlap / 2
+                        dismissButtonY -= ny * overlap / 2
+                        snoozeButtonX += nx * overlap / 2
+                        snoozeButtonY += ny * overlap / 2
+                    }
+                }
             }
 
             // Bounce dismiss button off walls
@@ -120,25 +150,26 @@ fun FloatingActionButtons(
         Button(
             onClick = onSnooze,
             modifier = Modifier
-                .width(200.dp)
-                .height(64.dp)
+                .width(140.dp)
+                .height(48.dp)
                 .offset(
                     x = with(density) { snoozeButtonX.toDp() },
                     y = with(density) { snoozeButtonY.toDp() }
                 ),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondary
-            )
+            ),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Snooze,
                 contentDescription = null,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "SNOOZE",
-                fontSize = 20.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -147,25 +178,26 @@ fun FloatingActionButtons(
         Button(
             onClick = onDismiss,
             modifier = Modifier
-                .width(200.dp)
-                .height(64.dp)
+                .width(140.dp)
+                .height(48.dp)
                 .offset(
                     x = with(density) { dismissButtonX.toDp() },
                     y = with(density) { dismissButtonY.toDp() }
                 ),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.primary
-            )
+            ),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.AlarmOff,
                 contentDescription = null,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "DISMISS",
-                fontSize = 20.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
         }
