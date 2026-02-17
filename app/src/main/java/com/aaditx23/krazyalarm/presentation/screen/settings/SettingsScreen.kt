@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AlarmOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -19,7 +20,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel,
     onNavigateBack: () -> Unit,
     onNavigateToLEDPatterns: () -> Unit = {},
-    onNavigateToVibrationPatterns: () -> Unit = {}
+    onNavigateToVibrationPatterns: () -> Unit = {},
+    onTestAlarm: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isSystemInDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
@@ -89,6 +91,37 @@ fun SettingsScreen(
                 volume = uiState.defaultVolume,
                 onVolumeChange = { viewModel.updateVolume(it) }
             )
+
+            // Test Alarm Button
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onTestAlarm
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Test Alarm Screen",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        Text(
+                            text = "Preview the alarm ringing screen",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.AlarmOff,
+                        contentDescription = "Test",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
         }
     }
 }

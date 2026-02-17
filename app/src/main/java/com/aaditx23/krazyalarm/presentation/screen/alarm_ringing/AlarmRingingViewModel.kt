@@ -27,6 +27,32 @@ class AlarmRingingViewModel(
     private fun loadAlarm() {
         viewModelScope.launch {
             try {
+                // Handle test alarm scenario
+                if (alarmId == -1L) {
+                    val currentCalendar = Calendar.getInstance()
+                    val testAlarm = Alarm(
+                        id = -1L,
+                        hour = currentCalendar.get(Calendar.HOUR_OF_DAY),
+                        minute = currentCalendar.get(Calendar.MINUTE),
+                        days = 0,
+                        enabled = true,
+                        label = "Test Alarm",
+                        ringtoneUri = null,
+                        flashPatternId = "NONE",
+                        vibrationPatternId = "CONTINUOUS",
+                        vibrationIntensity = com.aaditx23.krazyalarm.domain.models.VibrationIntensity.MEDIUM,
+                        volume = 100,
+                        snoozeDurationMinutes = 5,
+                        alarmDurationMinutes = 1,
+                        scheduledDate = null
+                    )
+                    _uiState.value = AlarmRingingUiState.Ringing(
+                        alarm = testAlarm,
+                        currentTime = getCurrentTimeString()
+                    )
+                    return@launch
+                }
+
                 val alarm = alarmRepository.getAlarm(alarmId)
                 if (alarm != null) {
                     _uiState.value = AlarmRingingUiState.Ringing(

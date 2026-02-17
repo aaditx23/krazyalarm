@@ -64,6 +64,14 @@ fun AppNavigation(
                 },
                 onNavigateToVibrationPatterns = {
                     navController.navigate(Screen.VibrationPatterns.route)
+                },
+                onTestAlarm = {
+                    // Start the AlarmRingingActivity for testing
+                    val intent = com.aaditx23.krazyalarm.presentation.screen.alarm_ringing.AlarmRingingActivity.createIntent(
+                        context = context,
+                        alarmId = -1L // -1 indicates a test alarm
+                    )
+                    context.startActivity(intent)
                 }
             )
         }
