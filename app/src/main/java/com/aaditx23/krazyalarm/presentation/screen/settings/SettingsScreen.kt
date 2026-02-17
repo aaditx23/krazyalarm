@@ -22,6 +22,14 @@ fun SettingsScreen(
     onNavigateToVibrationPatterns: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isSystemInDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
+
+    // Calculate actual dark mode state considering system theme
+    val actualIsDarkMode = when (uiState.darkModeValue) {
+        "dark" -> true
+        "light" -> false
+        else -> isSystemInDarkTheme
+    }
 
     Scaffold(
         topBar = {
@@ -48,7 +56,7 @@ fun SettingsScreen(
         ) {
             // Dark Mode Card
             DarkModeCard(
-                isDarkMode = uiState.isDarkMode,
+                isDarkMode = actualIsDarkMode,
                 onToggle = { viewModel.toggleDarkMode(it) }
             )
 

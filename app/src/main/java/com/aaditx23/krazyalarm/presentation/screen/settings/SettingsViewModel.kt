@@ -32,7 +32,7 @@ class SettingsViewModel(
                 settingsRepository.alarmDurationMinutes
             ) { flows: Array<Any?> ->
                 SettingsUiState(
-                    isDarkMode = (flows[0] as String) == "dark",
+                    darkModeValue = flows[0] as String,
                     snoozeDuration = flows[1] as Int,
                     defaultFlashPattern = flows[2] as String,
                     defaultVibrationPattern = flows[3] as String,
@@ -92,7 +92,7 @@ class SettingsViewModel(
 }
 
 data class SettingsUiState(
-    val isDarkMode: Boolean = false,
+    val darkModeValue: String = "system",
     val snoozeDuration: Int = 10,
     val defaultFlashPattern: String = "NONE",
     val defaultVibrationPattern: String = "CONTINUOUS",
