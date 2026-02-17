@@ -67,6 +67,16 @@ class AlarmListViewModel(
     fun toggleAlarm(alarmId: Long, enabled: Boolean) {
         viewModelScope.launch {
             toggleAlarmUseCase(alarmId, enabled)
+                .onSuccess {
+                    if (enabled) {
+                        // Get the alarm details to show schedule message
+                        val alarm = getAlarmByIdUseCase(alarmId)
+                        if (alarm != null) {
+                            val message = formatAlarmScheduleMessage(alarm)
+                            _uiEvents.value = UiEvent.Success(message)
+                        }
+                    }
+                }
                 .onFailure {
                     _uiEvents.value = UiEvent.Error("Failed to ${if (enabled) "enable" else "disable"} alarm")
                 }

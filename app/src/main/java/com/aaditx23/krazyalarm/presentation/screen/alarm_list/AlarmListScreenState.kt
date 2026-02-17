@@ -13,4 +13,5 @@ data class UiState(
 
 sealed class UiEvent {
     data class Error(val message: String) : UiEvent()
+    data class Success(val message: String) : UiEvent()
 }

@@ -130,6 +130,9 @@ fun AlarmListScreen(
                 is UiEvent.Error -> {
                     snackbarHostState.showSnackbar(event.message)
                 }
+                is UiEvent.Success -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
             }
             viewModel.consumeUiEvent()
         }
