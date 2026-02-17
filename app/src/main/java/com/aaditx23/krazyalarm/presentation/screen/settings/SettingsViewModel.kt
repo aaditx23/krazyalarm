@@ -27,14 +27,18 @@ class SettingsViewModel(
                 settingsRepository.snoozeDefaultMinutes,
                 settingsRepository.defaultFlashPattern,
                 settingsRepository.defaultVibrationPattern,
-                settingsRepository.defaultVibrationIntensity
-            ) { darkMode, snoozeDuration, flashPattern, vibrationPattern, vibrationIntensity ->
+                settingsRepository.defaultVibrationIntensity,
+                settingsRepository.defaultVolume,
+                settingsRepository.alarmDurationMinutes
+            ) { flows: Array<Any?> ->
                 SettingsUiState(
-                    isDarkMode = darkMode == "dark",
-                    snoozeDuration = snoozeDuration,
-                    defaultFlashPattern = flashPattern,
-                    defaultVibrationPattern = vibrationPattern,
-                    defaultVibrationIntensity = vibrationIntensity
+                    isDarkMode = (flows[0] as String) == "dark",
+                    snoozeDuration = flows[1] as Int,
+                    defaultFlashPattern = flows[2] as String,
+                    defaultVibrationPattern = flows[3] as String,
+                    defaultVibrationIntensity = flows[4] as String,
+                    defaultVolume = flows[5] as Int,
+                    alarmDurationMinutes = flows[6] as Int
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -79,6 +83,12 @@ class SettingsViewModel(
             settingsRepository.setDefaultVolume(volume)
         }
     }
+
+    fun updateAlarmDuration(minutes: Int) {
+        viewModelScope.launch {
+            settingsRepository.setAlarmDurationMinutes(minutes)
+        }
+    }
 }
 
 data class SettingsUiState(
@@ -87,6 +97,7 @@ data class SettingsUiState(
     val defaultFlashPattern: String = "NONE",
     val defaultVibrationPattern: String = "CONTINUOUS",
     val defaultVibrationIntensity: String = "MEDIUM",
-    val defaultVolume: Int = 100
+    val defaultVolume: Int = 100,
+    val alarmDurationMinutes: Int = 1
 )
 

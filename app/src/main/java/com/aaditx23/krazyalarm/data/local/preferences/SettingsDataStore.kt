@@ -21,6 +21,7 @@ class SettingsDataStore(private val context: Context) {
         private val KEY_DEFAULT_VIBRATION_PATTERN = stringPreferencesKey("default_vibration_pattern")
         private val KEY_DEFAULT_VIBRATION_INTENSITY = stringPreferencesKey("default_vibration_intensity")
         private val KEY_DEFAULT_VOLUME = intPreferencesKey("default_volume")
+        private val KEY_ALARM_DURATION_MINUTES = intPreferencesKey("alarm_duration_minutes")
 
         const val DARK_MODE_LIGHT = "LIGHT"
         const val DARK_MODE_DARK = "DARK"
@@ -96,6 +97,18 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setDefaultVolume(volume: Int) {
         context.dataStore.edit { preferences ->
             preferences[KEY_DEFAULT_VOLUME] = volume.coerceIn(1, 150)
+        }
+    }
+
+    // Alarm duration in minutes (1-5)
+    val alarmDurationMinutes: Flow<Int> = context.dataStore.data
+        .map { preferences ->
+            preferences[KEY_ALARM_DURATION_MINUTES] ?: 1
+        }
+
+    suspend fun setAlarmDurationMinutes(minutes: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_ALARM_DURATION_MINUTES] = minutes.coerceIn(1, 5)
         }
     }
 }

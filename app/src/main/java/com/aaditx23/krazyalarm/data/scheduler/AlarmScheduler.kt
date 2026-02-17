@@ -82,19 +82,36 @@ class AlarmScheduler(private val context: Context, private val alarmRepository: 
 
     private fun getNextAlarmTime(alarm: Alarm): Long {
         val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, alarm.hour)
-        calendar.set(Calendar.MINUTE, alarm.minute)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
 
         if (alarm.days == 0) {
             // One time alarm
-            if (calendar.timeInMillis <= System.currentTimeMillis()) {
-                calendar.add(Calendar.DAY_OF_YEAR, 1)
+            if (alarm.scheduledDate != null) {
+                // Use the scheduled date if it's set
+                calendar.timeInMillis = alarm.scheduledDate
+                // Ensure hour and minute are correct
+                calendar.set(Calendar.HOUR_OF_DAY, alarm.hour)
+                calendar.set(Calendar.MINUTE, alarm.minute)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                return calendar.timeInMillis
+            } else {
+                // No scheduled date, use today's time or tomorrow if already passed
+                calendar.set(Calendar.HOUR_OF_DAY, alarm.hour)
+                calendar.set(Calendar.MINUTE, alarm.minute)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                if (calendar.timeInMillis <= System.currentTimeMillis()) {
+                    calendar.add(Calendar.DAY_OF_YEAR, 1)
+                }
+                return calendar.timeInMillis
             }
-            return calendar.timeInMillis
         } else {
             // Repeating alarm on specific days
+            calendar.set(Calendar.HOUR_OF_DAY, alarm.hour)
+            calendar.set(Calendar.MINUTE, alarm.minute)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+
             val currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) // 1=Sun, 2=Mon, ..., 7=Sat
             for (i in 0..6) {
                 val checkDay = ((currentDayOfWeek - 1 + i) % 7) + 1 // Cycle through days

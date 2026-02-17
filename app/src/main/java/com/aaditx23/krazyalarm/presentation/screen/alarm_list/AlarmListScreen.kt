@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
@@ -103,13 +104,20 @@ fun AlarmListScreen(
         editEvents?.let { event ->
             when (event) {
                 is AlarmEditEvent.SaveSuccessWithTime -> {
+                    viewModel.showSheet(false)
+                    kotlinx.coroutines.delay(300) // Wait for sheet to dismiss
                     snackbarHostState.showSnackbar("Alarm set for ${event.hours} hours and ${event.minutes} minutes from now")
+                }
+                is AlarmEditEvent.SaveSuccessWithMessage -> {
+                    viewModel.showSheet(false)
+                    kotlinx.coroutines.delay(300) // Wait for sheet to dismiss
+                    snackbarHostState.showSnackbar(event.message)
                 }
                 is AlarmEditEvent.SaveError -> {
                     snackbarHostState.showSnackbar("Error: ${event.message}")
                 }
                 AlarmEditEvent.SaveSuccess -> {
-                    // Handle old event if needed
+                    viewModel.showSheet(false)
                 }
             }
             viewModel.consumeEditEvent()
@@ -163,6 +171,9 @@ fun AlarmListScreen(
                 title = { Text(if (uiState.isSelectMode) "${uiState.selectedAlarms.size} selected" else "Alarms") },
                 actions = {
                     if (uiState.isSelectMode) {
+                        IconButton(onClick = { viewModel.selectAllAlarms() }) {
+                            Icon(Icons.Default.SelectAll, contentDescription = "Select all")
+                        }
                         IconButton(onClick = { viewModel.toggleSelectMode() }) {
                             Icon(Icons.Default.Close, contentDescription = "Cancel")
                         }

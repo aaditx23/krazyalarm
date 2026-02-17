@@ -58,6 +58,7 @@ class AlarmRingingService : Service() {
     private var vibrator: Vibrator? = null
     private var cameraManager: CameraManager? = null
     private var flashJob: Job? = null
+    private var autoDismissJob: Job? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -111,12 +112,24 @@ class AlarmRingingService : Service() {
                 startVibration(alarm)
                 startFlash(alarm)
 
+                // Schedule auto-dismiss after alarm duration
+                scheduleAutoDismiss(alarm)
+
                 Log.d(TAG, "Alarm ringing started for: ${alarm.label ?: "Alarm"}")
 
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start alarm ringing", e)
                 stopSelf()
             }
+        }
+    }
+
+    private fun scheduleAutoDismiss(alarm: Alarm) {
+        val durationMillis = alarm.alarmDurationMinutes * 60 * 1000L
+        autoDismissJob = CoroutineScope(Dispatchers.Main).launch {
+            delay(durationMillis)
+            Log.d(TAG, "Auto-dismissing alarm after ${alarm.alarmDurationMinutes} minutes")
+            dismissAlarm()
         }
     }
 
@@ -460,6 +473,10 @@ class AlarmRingingService : Service() {
     }
 
     private fun stopAllAlarmComponents() {
+        // Cancel auto-dismiss job
+        autoDismissJob?.cancel()
+        autoDismissJob = null
+
         // Stop LoudnessEnhancer
         loudnessEnhancer?.enabled = false
         loudnessEnhancer?.release()

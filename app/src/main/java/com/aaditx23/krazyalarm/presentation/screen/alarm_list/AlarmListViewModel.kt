@@ -94,6 +94,7 @@ class AlarmListViewModel(
             val defaultVibrationPatternId = settingsRepository.defaultVibrationPattern.first()
             val defaultSnoozeDuration = settingsRepository.snoozeDefaultMinutes.first()
             val defaultVolume = settingsRepository.defaultVolume.first()
+            val defaultAlarmDuration = settingsRepository.alarmDurationMinutes.first()
 
             _editState.value = AlarmEditState(
                 hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
@@ -101,7 +102,8 @@ class AlarmListViewModel(
                 flashPattern = FlashPattern.fromId(defaultFlashPatternId),
                 vibrationPattern = VibrationPattern.fromId(defaultVibrationPatternId),
                 volume = defaultVolume,
-                snoozeDurationMinutes = defaultSnoozeDuration
+                snoozeDurationMinutes = defaultSnoozeDuration,
+                alarmDurationMinutes = defaultAlarmDuration
             )
         }
     }
@@ -131,6 +133,7 @@ class AlarmListViewModel(
                         vibrationIntensity = alarm.vibrationIntensity,
                         volume = alarm.volume,
                         snoozeDurationMinutes = alarm.snoozeDurationMinutes,
+                        alarmDurationMinutes = alarm.alarmDurationMinutes,
                         ringtoneUri = alarm.ringtoneUri,
                         scheduledDate = alarm.scheduledDate
                     )
@@ -214,6 +217,7 @@ class AlarmListViewModel(
                 vibrationIntensity = state.vibrationIntensity,
                 volume = state.volume,
                 snoozeDurationMinutes = state.snoozeDurationMinutes,
+                alarmDurationMinutes = state.alarmDurationMinutes,
                 scheduledDate = state.scheduledDate
             )
 
@@ -226,10 +230,8 @@ class AlarmListViewModel(
 
                 if (result.isSuccess) {
                     val alarm = result.getOrThrow()
-                    val nextTime = calculateNextAlarmTime(alarm)
-                    val hours = nextTime / 3600000
-                    val minutes = (nextTime % 3600000) / 60000
-                    _editEvents.value = AlarmEditEvent.SaveSuccessWithTime(hours.toInt(), minutes.toInt())
+                    val message = formatAlarmScheduleMessage(alarm)
+                    _editEvents.value = AlarmEditEvent.SaveSuccessWithMessage(message)
                     loadAlarms() // Refresh list
                 } else {
                     _editEvents.value = AlarmEditEvent.SaveError(result.exceptionOrNull()?.message ?: "Unknown error")
@@ -260,6 +262,12 @@ class AlarmListViewModel(
             current.selectedAlarms + alarmId
         }
         _uiState.value = current.copy(selectedAlarms = newSelected)
+    }
+
+    fun selectAllAlarms() {
+        val current = _uiState.value
+        val allAlarmIds = current.alarms.map { it.id }.toSet()
+        _uiState.value = current.copy(selectedAlarms = allAlarmIds)
     }
 
     fun deleteSelectedAlarms() {
@@ -305,17 +313,92 @@ class AlarmListViewModel(
         _uiEvents.value = null
     }
 
-    private fun calculateNextAlarmTime(alarm: com.aaditx23.krazyalarm.domain.models.Alarm): Long {
+    private fun formatAlarmScheduleMessage(alarm: com.aaditx23.krazyalarm.domain.models.Alarm): String {
         val calendar = java.util.Calendar.getInstance()
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, alarm.hour)
-        calendar.set(java.util.Calendar.MINUTE, alarm.minute)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val now = System.currentTimeMillis()
 
-        if (calendar.timeInMillis <= System.currentTimeMillis()) {
-            calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
+        // Calculate the actual trigger time using the same logic as AlarmScheduler
+        val triggerTime = calculateTriggerTime(alarm)
+        val diffMillis = triggerTime - now
+
+        val hours = diffMillis / 3600000
+        val minutes = (diffMillis % 3600000) / 60000
+
+        // Check if it's today or tomorrow
+        val triggerCalendar = java.util.Calendar.getInstance().apply {
+            timeInMillis = triggerTime
         }
+        val todayCalendar = java.util.Calendar.getInstance()
 
-        return calendar.timeInMillis - System.currentTimeMillis()
+        val isSameDay = triggerCalendar.get(java.util.Calendar.YEAR) == todayCalendar.get(java.util.Calendar.YEAR) &&
+                triggerCalendar.get(java.util.Calendar.DAY_OF_YEAR) == todayCalendar.get(java.util.Calendar.DAY_OF_YEAR)
+
+        val tomorrowCalendar = java.util.Calendar.getInstance().apply {
+            add(java.util.Calendar.DAY_OF_YEAR, 1)
+        }
+        val isTomorrow = triggerCalendar.get(java.util.Calendar.YEAR) == tomorrowCalendar.get(java.util.Calendar.YEAR) &&
+                triggerCalendar.get(java.util.Calendar.DAY_OF_YEAR) == tomorrowCalendar.get(java.util.Calendar.DAY_OF_YEAR)
+
+        return when {
+            isSameDay -> {
+                if (hours > 0) {
+                    "Alarm scheduled in $hours hour${if (hours != 1L) "s" else ""} and $minutes minute${if (minutes != 1L) "s" else ""}"
+                } else {
+                    "Alarm scheduled in $minutes minute${if (minutes != 1L) "s" else ""}"
+                }
+            }
+            isTomorrow -> {
+                val timeStr = String.format("%02d:%02d", alarm.hour, alarm.minute)
+                "Alarm scheduled for tomorrow at $timeStr"
+            }
+            else -> {
+                val dateFormat = java.text.SimpleDateFormat("MMM dd, yyyy 'at' HH:mm", java.util.Locale.getDefault())
+                "Alarm scheduled for ${dateFormat.format(triggerTime)}"
+            }
+        }
+    }
+
+    private fun calculateTriggerTime(alarm: com.aaditx23.krazyalarm.domain.models.Alarm): Long {
+        val calendar = java.util.Calendar.getInstance()
+
+        if (alarm.days == 0) {
+            // One time alarm
+            if (alarm.scheduledDate != null) {
+                // Use the scheduled date if it's set
+                calendar.timeInMillis = alarm.scheduledDate
+                calendar.set(java.util.Calendar.HOUR_OF_DAY, alarm.hour)
+                calendar.set(java.util.Calendar.MINUTE, alarm.minute)
+                calendar.set(java.util.Calendar.SECOND, 0)
+                calendar.set(java.util.Calendar.MILLISECOND, 0)
+                return calendar.timeInMillis
+            } else {
+                // No scheduled date, use today's time or tomorrow if already passed
+                calendar.set(java.util.Calendar.HOUR_OF_DAY, alarm.hour)
+                calendar.set(java.util.Calendar.MINUTE, alarm.minute)
+                calendar.set(java.util.Calendar.SECOND, 0)
+                calendar.set(java.util.Calendar.MILLISECOND, 0)
+                if (calendar.timeInMillis <= System.currentTimeMillis()) {
+                    calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
+                }
+                return calendar.timeInMillis
+            }
+        } else {
+            // Repeating alarm on specific days
+            calendar.set(java.util.Calendar.HOUR_OF_DAY, alarm.hour)
+            calendar.set(java.util.Calendar.MINUTE, alarm.minute)
+            calendar.set(java.util.Calendar.SECOND, 0)
+            calendar.set(java.util.Calendar.MILLISECOND, 0)
+
+            val currentDayOfWeek = calendar.get(java.util.Calendar.DAY_OF_WEEK)
+            for (i in 0..6) {
+                val checkDay = ((currentDayOfWeek - 1 + i) % 7) + 1
+                if ((alarm.days and (1 shl (checkDay - 1))) != 0) {
+                    calendar.add(java.util.Calendar.DAY_OF_YEAR, i)
+                    return calendar.timeInMillis
+                }
+            }
+            calendar.add(java.util.Calendar.DAY_OF_YEAR, 7)
+            return calendar.timeInMillis
+        }
     }
 }

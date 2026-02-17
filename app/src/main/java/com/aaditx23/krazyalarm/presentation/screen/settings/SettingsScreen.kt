@@ -70,6 +70,12 @@ fun SettingsScreen(
                 onClick = onNavigateToVibrationPatterns
             )
 
+            // Alarm Duration Card
+            AlarmDurationCard(
+                durationMinutes = uiState.alarmDurationMinutes,
+                onDurationChange = { viewModel.updateAlarmDuration(it) }
+            )
+
             // Volume Slider (with overclock support up to 150%)
             VolumeCard(
                 volume = uiState.defaultVolume,

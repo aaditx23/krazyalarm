@@ -20,4 +20,7 @@ interface SettingsRepository {
 
     val defaultVolume: Flow<Int>
     suspend fun setDefaultVolume(volume: Int)
+
+    val alarmDurationMinutes: Flow<Int>
+    suspend fun setAlarmDurationMinutes(minutes: Int)
 }

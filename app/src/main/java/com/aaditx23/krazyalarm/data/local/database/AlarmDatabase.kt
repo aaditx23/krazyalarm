@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [AlarmEntity::class],
-    version = 1,
+    version = 3,
     exportSchema = true
 )
 abstract class AlarmDatabase : RoomDatabase() {
@@ -19,6 +19,19 @@ abstract class AlarmDatabase : RoomDatabase() {
     companion object {
         private const val DATABASE_NAME = "krazyalarm.db"
 
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add alarmDurationMinutes column with default value of 1
+                database.execSQL("ALTER TABLE alarms ADD COLUMN alarmDurationMinutes INTEGER NOT NULL DEFAULT 1")
+            }
+        }
+
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add alarmDurationMinutes column with default value of 1
+                database.execSQL("ALTER TABLE alarms ADD COLUMN alarmDurationMinutes INTEGER NOT NULL DEFAULT 1")
+            }
+        }
 
         @Volatile
         private var INSTANCE: AlarmDatabase? = null
@@ -30,6 +43,7 @@ abstract class AlarmDatabase : RoomDatabase() {
                     AlarmDatabase::class.java,
                     DATABASE_NAME
                 )
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                 INSTANCE = instance
                 instance

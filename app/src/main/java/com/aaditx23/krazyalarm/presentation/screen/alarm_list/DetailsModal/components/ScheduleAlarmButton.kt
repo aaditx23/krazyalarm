@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,7 +25,7 @@ fun ScheduleAlarmButton(
         modifier = Modifier.clickable(onClick = onScheduleClick)
     ) {
         Icon(
-            imageVector = Icons.Outlined.Notifications,
+            imageVector = Icons.Outlined.CalendarToday,
             contentDescription = if (hasScheduledDate) "Change scheduled date" else "Schedule alarm",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(24.dp)

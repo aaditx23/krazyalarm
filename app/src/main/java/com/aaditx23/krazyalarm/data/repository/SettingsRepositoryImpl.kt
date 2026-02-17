@@ -43,4 +43,10 @@ class SettingsRepositoryImpl(
     override suspend fun setDefaultVolume(volume: Int) {
         settingsDataStore.setDefaultVolume(volume)
     }
+
+    override val alarmDurationMinutes: Flow<Int> = settingsDataStore.alarmDurationMinutes
+
+    override suspend fun setAlarmDurationMinutes(minutes: Int) {
+        settingsDataStore.setAlarmDurationMinutes(minutes)
+    }
 }

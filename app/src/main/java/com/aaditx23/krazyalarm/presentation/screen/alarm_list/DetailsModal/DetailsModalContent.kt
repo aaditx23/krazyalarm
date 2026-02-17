@@ -59,17 +59,23 @@ fun DetailsModalContent(
     var showFlashPatternDialog by remember { mutableStateOf(false) }
     var showVibrationPatternDialog by remember { mutableStateOf(false) }
 
-    // Handle events
+    // Handle events - Don't consume or close for success events, let the parent handle it
     events?.let { event ->
         when (event) {
-            AlarmEditEvent.SaveSuccess -> onSave()
-            is AlarmEditEvent.SaveSuccessWithTime -> onSave()
+            AlarmEditEvent.SaveSuccess -> {
+                // Let parent handle
+            }
+            is AlarmEditEvent.SaveSuccessWithTime -> {
+                // Let parent handle
+            }
+            is AlarmEditEvent.SaveSuccessWithMessage -> {
+                // Let parent handle
+            }
             is AlarmEditEvent.SaveError -> {
                 // Error is already handled by showing in UI state
                 // Could add SnackBar here if needed
             }
         }
-        onConsumeEvent()
     }
 
     Column(
