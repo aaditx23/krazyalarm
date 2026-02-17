@@ -92,6 +92,12 @@ fun SettingsScreen(
                 onVolumeChange = { viewModel.updateVolume(it) }
             )
 
+            // Button Motion Speed
+            ButtonMotionSpeedCard(
+                speed = uiState.buttonMotionSpeed,
+                onSpeedChange = { viewModel.updateButtonMotionSpeed(it) }
+            )
+
             // Test Alarm Button
             Card(
                 modifier = Modifier.fillMaxWidth(),

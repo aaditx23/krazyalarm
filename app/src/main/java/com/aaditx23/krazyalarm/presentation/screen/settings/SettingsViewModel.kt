@@ -29,7 +29,8 @@ class SettingsViewModel(
                 settingsRepository.defaultVibrationPattern,
                 settingsRepository.defaultVibrationIntensity,
                 settingsRepository.defaultVolume,
-                settingsRepository.alarmDurationMinutes
+                settingsRepository.alarmDurationMinutes,
+                settingsRepository.buttonMotionSpeed
             ) { flows: Array<Any?> ->
                 SettingsUiState(
                     darkModeValue = flows[0] as String,
@@ -38,7 +39,8 @@ class SettingsViewModel(
                     defaultVibrationPattern = flows[3] as String,
                     defaultVibrationIntensity = flows[4] as String,
                     defaultVolume = flows[5] as Int,
-                    alarmDurationMinutes = flows[6] as Int
+                    alarmDurationMinutes = flows[6] as Int,
+                    buttonMotionSpeed = flows[7] as Int
                 )
             }.collect { state ->
                 _uiState.value = state
@@ -89,6 +91,12 @@ class SettingsViewModel(
             settingsRepository.setAlarmDurationMinutes(minutes)
         }
     }
+
+    fun updateButtonMotionSpeed(speed: Int) {
+        viewModelScope.launch {
+            settingsRepository.setButtonMotionSpeed(speed)
+        }
+    }
 }
 
 data class SettingsUiState(
@@ -98,6 +106,7 @@ data class SettingsUiState(
     val defaultVibrationPattern: String = "CONTINUOUS",
     val defaultVibrationIntensity: String = "MEDIUM",
     val defaultVolume: Int = 100,
-    val alarmDurationMinutes: Int = 1
+    val alarmDurationMinutes: Int = 1,
+    val buttonMotionSpeed: Int = 4
 )
 

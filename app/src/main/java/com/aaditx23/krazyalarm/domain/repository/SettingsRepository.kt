@@ -23,4 +23,7 @@ interface SettingsRepository {
 
     val alarmDurationMinutes: Flow<Int>
     suspend fun setAlarmDurationMinutes(minutes: Int)
+
+    val buttonMotionSpeed: Flow<Int>
+    suspend fun setButtonMotionSpeed(speed: Int)
 }

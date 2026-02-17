@@ -19,6 +19,7 @@ fun FloatingActionButtons(
     onSnooze: () -> Unit,
     screenWidthPx: Float,
     screenHeightPx: Float,
+    buttonMotionSpeed: Int,
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
@@ -29,33 +30,39 @@ fun FloatingActionButtons(
     val maxX = screenWidthPx - buttonWidthPx
     val maxY = screenHeightPx - buttonHeightPx
 
+    // Convert speed setting (0-8) to actual velocity
+    val actualSpeed = buttonMotionSpeed.toFloat()
+
     // Create physics bodies for both buttons
-    val dismissBody = remember {
+    val dismissBody = remember(buttonMotionSpeed) {
         PhysicsBody(
             x = 50f,
             y = screenHeightPx - buttonHeightPx - 200f,
             width = buttonWidthPx,
             height = buttonHeightPx,
-            vx = randomVelocity(),
-            vy = randomVelocity()
+            vx = if (buttonMotionSpeed > 0) (if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed) else 0f,
+            vy = if (buttonMotionSpeed > 0) (if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed) else 0f
         )
     }
 
-    val snoozeBody = remember {
+    val snoozeBody = remember(buttonMotionSpeed) {
         PhysicsBody(
             x = screenWidthPx - buttonWidthPx - 50f,
             y = screenHeightPx - buttonHeightPx - 400f,
             width = buttonWidthPx,
             height = buttonHeightPx,
-            vx = randomVelocity(),
-            vy = randomVelocity()
+            vx = if (buttonMotionSpeed > 0) (if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed) else 0f,
+            vy = if (buttonMotionSpeed > 0) (if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed) else 0f
         )
     }
 
     // State for UI recomposition
     var tick by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(maxX, maxY) {
+    LaunchedEffect(maxX, maxY, buttonMotionSpeed) {
+        // Skip animation if speed is 0
+        if (buttonMotionSpeed == 0) return@LaunchedEffect
+
         while (true) {
             delay(16L) // ~60 FPS
 
@@ -70,9 +77,10 @@ fun FloatingActionButtons(
             // Body-to-body collision
             PhysicsBody.resolveCollision(dismissBody, snoozeBody)
 
-            // Speed limits
-            dismissBody.clampSpeed(8f)
-            snoozeBody.clampSpeed(8f)
+            // Speed limits - scale with button motion speed
+            val maxSpeed = actualSpeed * 2f
+            dismissBody.clampSpeed(maxSpeed)
+            snoozeBody.clampSpeed(maxSpeed)
 
             // Trigger recomposition
             tick++
@@ -121,10 +129,5 @@ fun FloatingActionButtons(
             }
         }
     }
-}
-
-private fun randomVelocity(): Float {
-    val speed = (2..4).random().toFloat()
-    return if (kotlin.random.Random.nextBoolean()) speed else -speed
 }
 

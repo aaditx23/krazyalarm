@@ -18,7 +18,9 @@ val presentationModule = module {
     viewModel { (alarmId: Long) ->
         AlarmRingingViewModel(
             alarmId = alarmId,
-            alarmRepository = get()
+            alarmRepository = get(),
+            settingsRepository = get()
         )
     }
+
 }

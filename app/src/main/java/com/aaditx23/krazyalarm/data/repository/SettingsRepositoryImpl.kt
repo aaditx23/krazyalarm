@@ -49,4 +49,10 @@ class SettingsRepositoryImpl(
     override suspend fun setAlarmDurationMinutes(minutes: Int) {
         settingsDataStore.setAlarmDurationMinutes(minutes)
     }
+
+    override val buttonMotionSpeed: Flow<Int> = settingsDataStore.buttonMotionSpeed
+
+    override suspend fun setButtonMotionSpeed(speed: Int) {
+        settingsDataStore.setButtonMotionSpeed(speed)
+    }
 }
