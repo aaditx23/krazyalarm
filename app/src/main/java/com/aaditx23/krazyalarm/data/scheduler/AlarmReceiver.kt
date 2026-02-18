@@ -20,11 +20,8 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
             runBlocking {
                 val alarm = alarmRepository.getAlarm(alarmId)
                 if (alarm != null) {
-                    // Start the alarm ringing service
-                    val serviceIntent = Intent(context, AlarmRingingService::class.java).apply {
-                        putExtra(AlarmRingingService.EXTRA_ALARM_ID, alarmId)
-                    }
-                    context.startForegroundService(serviceIntent)
+                    // Add alarm to queue instead of starting immediately
+                    AlarmQueueManager.enqueueAlarm(context, alarmId)
 
                     // Reschedule if repeating
                     if (alarm.days != 0) {

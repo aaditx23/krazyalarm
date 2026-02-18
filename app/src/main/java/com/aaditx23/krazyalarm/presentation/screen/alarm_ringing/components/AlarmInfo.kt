@@ -33,16 +33,5 @@ fun AlarmInfo(
             textAlign = TextAlign.Center,
             fontSize = 28.sp
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Alarm time
-        val alarmTimeText = String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
-        Text(
-            text = "Scheduled for $alarmTimeText",
-            color = Color.White.copy(alpha = 0.7f),
-            style = MaterialTheme.typography.bodyLarge,
-            fontSize = 16.sp
-        )
     }
 }

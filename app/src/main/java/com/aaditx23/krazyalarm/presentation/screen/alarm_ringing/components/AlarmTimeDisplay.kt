@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.sp
 fun AlarmTimeDisplay(
     dateString: String,
     currentTime: String,
+    scheduledTime: String,
+    alarmStartTime: String,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -29,7 +31,7 @@ fun AlarmTimeDisplay(
             fontSize = 18.sp
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Current time (large display)
         Text(
@@ -40,5 +42,49 @@ fun AlarmTimeDisplay(
             fontSize = 72.sp,
             letterSpacing = 2.sp
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Scheduled time
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Scheduled for: ",
+                color = Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = 15.sp
+            )
+            Text(
+                text = scheduledTime,
+                color = Color(0xFFFFD700), // Gold color
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Alarm trigger time
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Triggered at: ",
+                color = Color.White.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.bodyLarge,
+                fontSize = 15.sp
+            )
+            Text(
+                text = alarmStartTime,
+                color = Color(0xFF4ECDC4), // Cyan/turquoise color
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 16.sp
+            )
+        }
     }
 }

@@ -34,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import androidx.core.net.toUri
@@ -46,11 +47,20 @@ class AlarmRingingService : Service() {
         private const val NOTIFICATION_ID = 1
         const val ACTION_DISMISS = "com.aaditx23.krazyalarm.ACTION_DISMISS"
         const val ACTION_SNOOZE = "com.aaditx23.krazyalarm.ACTION_SNOOZE"
+        const val ACTION_AUTO_DISMISS = "com.aaditx23.krazyalarm.ACTION_AUTO_DISMISS"
         const val EXTRA_ALARM_ID = "alarm_id"
+
+        // Simple callback for Activity to listen for auto-dismiss
+        private var onAutoDismissListener: ((Long) -> Unit)? = null
+
+        fun setOnAutoDismissListener(listener: ((Long) -> Unit)?) {
+            onAutoDismissListener = listener
+        }
     }
 
     private val alarmRepository: AlarmRepository by inject()
     private val alarmScheduler: AlarmScheduler by inject()
+    private val settingsRepository: com.aaditx23.krazyalarm.domain.repository.SettingsRepository by inject()
 
     private var currentAlarm: Alarm? = null
     private var mediaPlayer: MediaPlayer? = null
@@ -102,6 +112,8 @@ class AlarmRingingService : Service() {
                     return@launch
                 }
 
+                Log.d(TAG, "Alarm loaded: id=${alarm.id}, duration=${alarm.alarmDurationMinutes}min")
+
                 currentAlarm = alarm
 
                 // Start foreground service with notification
@@ -129,6 +141,13 @@ class AlarmRingingService : Service() {
         autoDismissJob = CoroutineScope(Dispatchers.Main).launch {
             delay(durationMillis)
             Log.d(TAG, "Auto-dismissing alarm after ${alarm.alarmDurationMinutes} minutes")
+
+            // Notify Activity to close via callback
+            onAutoDismissListener?.invoke(alarm.id)
+            Log.d(TAG, "Auto-dismiss callback invoked for alarm ${alarm.id}")
+
+            // Small delay then dismiss
+            delay(100)
             dismissAlarm()
         }
     }
@@ -181,13 +200,28 @@ class AlarmRingingService : Service() {
     }
 
     private fun startRingtone(alarm: Alarm) {
-        try {
-            // Set system alarm volume to maximum for best quality
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
-            val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM)
-            audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, maxVolume, 0)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Read volume from settings
+                val volume = settingsRepository.defaultVolume.first()
+                Log.d(TAG, "Using volume from settings: $volume%")
 
-            mediaPlayer = MediaPlayer().apply {
+                // Set system alarm volume based on settings volume
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+                val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM)
+
+                if (volume <= 100) {
+                    // For 1-100%, set system volume proportionally
+                    val systemVolume = ((volume / 100.0) * maxVolume).toInt().coerceIn(1, maxVolume)
+                    audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, systemVolume, 0)
+                    Log.d(TAG, "System volume: $systemVolume/$maxVolume ($volume%)")
+                } else {
+                    // For >100%, set system volume to maximum (we'll use enhancer for boost)
+                    audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, maxVolume, 0)
+                    Log.d(TAG, "System volume: MAX, applying boost via LoudnessEnhancer")
+                }
+
+                mediaPlayer = MediaPlayer().apply {
                 // Try to use custom ringtone first, fallback to default if it fails
                 val ringtoneUri = alarm.ringtoneUri?.toUri()
                 var dataSourceSet = false
@@ -238,15 +272,15 @@ class AlarmRingingService : Service() {
                 prepare()
 
                 // Use LoudnessEnhancer for real volume boost
-                if (alarm.volume > 100) {
+                if (volume > 100) {
                     try {
                         loudnessEnhancer = LoudnessEnhancer(audioSessionId).apply {
                             // Calculate gain in millibels
-                            val ratio = alarm.volume / 100.0
+                            val ratio = volume / 100.0
                             val decibels = 20 * kotlin.math.log10(ratio)
                             val millibels = (decibels * 100).toInt().coerceIn(0, 3000)
 
-                            Log.d(TAG, "LoudnessEnhancer: ${alarm.volume}% = +${millibels}mB (+${millibels/100}dB)")
+                            Log.d(TAG, "LoudnessEnhancer: $volume% = +${millibels}mB (+${millibels/100}dB)")
                             setTargetGain(millibels)
                             enabled = true
                         }
@@ -262,6 +296,7 @@ class AlarmRingingService : Service() {
             Log.e(TAG, "Failed to start ringtone completely", e)
             // Still stop the service if we absolutely can't play any sound
             stopSelf()
+        }
         }
     }
 
@@ -423,8 +458,22 @@ class AlarmRingingService : Service() {
     }
 
     private fun dismissAlarm() {
-        Log.d(TAG, "Dismissing alarm")
+        Log.d(TAG, "dismissAlarm() called, currentAlarm: ${currentAlarm?.id}")
+        val alarmId = currentAlarm?.id
+
+        if (alarmId == null) {
+            Log.e(TAG, "dismissAlarm() called but currentAlarm is null!")
+        }
+
         stopAllAlarmComponents()
+
+        // Notify queue manager that this alarm finished
+        if (alarmId != null) {
+            Log.d(TAG, "Notifying AlarmQueueManager that alarm $alarmId finished")
+            AlarmQueueManager.onAlarmFinished(this, alarmId)
+        }
+
+        Log.d(TAG, "Stopping service")
         stopSelf()
     }
 
@@ -468,7 +517,14 @@ class AlarmRingingService : Service() {
             }
         }
 
+        val alarmId = currentAlarm?.id
         stopAllAlarmComponents()
+
+        // Notify queue manager that this alarm finished
+        if (alarmId != null) {
+            AlarmQueueManager.onAlarmFinished(this, alarmId)
+        }
+
         stopSelf()
     }
 

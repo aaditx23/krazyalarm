@@ -48,7 +48,6 @@ class AlarmRingingViewModel(
                             flashPatternId = "NONE",
                             vibrationPatternId = "CONTINUOUS",
                             vibrationIntensity = com.aaditx23.krazyalarm.domain.models.VibrationIntensity.MEDIUM,
-                            volume = 100,
                             snoozeDurationMinutes = 5,
                             alarmDurationMinutes = 1,
                             scheduledDate = null
@@ -96,7 +95,15 @@ sealed class AlarmRingingUiState {
     data class Ringing(
         val alarm: Alarm,
         val currentTime: String,
-        val buttonMotionSpeed: Int
+        val buttonMotionSpeed: Int,
+        val alarmStartTime: String = getCurrentStartTimeString()
     ) : AlarmRingingUiState()
     data class Error(val message: String) : AlarmRingingUiState()
 }
+
+private fun getCurrentStartTimeString(): String {
+    val calendar = Calendar.getInstance()
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    return timeFormat.format(calendar.time)
+}
+

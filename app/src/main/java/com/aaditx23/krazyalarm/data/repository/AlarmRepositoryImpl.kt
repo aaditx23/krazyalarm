@@ -85,6 +85,21 @@ class AlarmRepositoryImpl(
         return alarmDao.getEnabledAlarms().map { it.toDomain() }
     }
 
+    override suspend fun checkDuplicateAlarm(hour: Int, minute: Int, scheduledDate: Long?, excludeId: Long?): Boolean {
+        return try {
+            android.util.Log.d("AlarmRepository", "Checking duplicate: hour=$hour, minute=$minute, scheduledDate=$scheduledDate, excludeId=$excludeId")
+            val duplicates = alarmDao.findDuplicateAlarm(hour, minute, scheduledDate, excludeId ?: -1L)
+            android.util.Log.d("AlarmRepository", "Found ${duplicates.size} duplicate(s)")
+            duplicates.forEach {
+                android.util.Log.d("AlarmRepository", "Duplicate alarm: id=${it.id}, hour=${it.hour}, minute=${it.minute}, scheduledDate=${it.scheduledDate}")
+            }
+            duplicates.isNotEmpty()
+        } catch (e: Exception) {
+            android.util.Log.e("AlarmRepository", "Error checking duplicate", e)
+            false
+        }
+    }
+
     private fun AlarmInput.toEntity(id: Long = 0, createdAt: Long = System.currentTimeMillis()): AlarmEntity {
         return AlarmEntity(
             id = id,
@@ -117,7 +132,6 @@ class AlarmRepositoryImpl(
             flashPatternId = flashPatternId,
             vibrationPatternId = vibrationPatternId,
             vibrationIntensity = VibrationIntensity.valueOf(vibrationIntensity),
-            volume = volume,
             snoozeDurationMinutes = snoozeDurationMinutes,
             alarmDurationMinutes = alarmDurationMinutes,
             scheduledDate = scheduledDate,

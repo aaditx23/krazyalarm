@@ -2,9 +2,8 @@ package com.aaditx23.krazyalarm.presentation.screen.alarm_ringing
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.view.WindowManager
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -29,6 +28,7 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val TAG = "AlarmRingingActivity"
         const val EXTRA_ALARM_ID = "alarm_id"
 
         fun createIntent(context: Context, alarmId: Long): Intent {
@@ -44,19 +44,17 @@ class AlarmRingingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Show activity when screen is locked
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true)
-            setTurnScreenOn(true)
-        } else {
-            @Suppress("DEPRECATION")
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
-            )
+        // Register for auto-dismiss callback from service
+        AlarmRingingService.setOnAutoDismissListener { dismissedAlarmId ->
+            if (dismissedAlarmId == alarmId) {
+                Log.d(TAG, "Auto-dismiss callback received for alarm $alarmId, closing activity")
+                finish()
+            }
         }
+
+        // Show activity when screen is locked
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
 
         setContent {
             val darkMode by settingsRepository.darkMode.collectAsState(initial = "system")
@@ -74,6 +72,12 @@ class AlarmRingingActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Clear the listener when activity is destroyed
+        AlarmRingingService.setOnAutoDismissListener(null)
     }
 
     private fun handleDismiss() {

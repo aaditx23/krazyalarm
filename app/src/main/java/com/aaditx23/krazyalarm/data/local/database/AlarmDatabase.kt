@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [AlarmEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 abstract class AlarmDatabase : RoomDatabase() {
@@ -19,22 +19,54 @@ abstract class AlarmDatabase : RoomDatabase() {
     companion object {
         private const val DATABASE_NAME = "krazyalarm.db"
 
-        private val MIGRATION_1_2 = object : Migration(1, 2) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Add alarmDurationMinutes column with default value of 1
-                database.execSQL("ALTER TABLE alarms ADD COLUMN alarmDurationMinutes INTEGER NOT NULL DEFAULT 1")
-            }
-        }
-
-        private val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                // Add alarmDurationMinutes column with default value of 1
-                database.execSQL("ALTER TABLE alarms ADD COLUMN alarmDurationMinutes INTEGER NOT NULL DEFAULT 1")
-            }
-        }
-
         @Volatile
         private var INSTANCE: AlarmDatabase? = null
+
+        // Migration from version 3 to 4: Remove volume column
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Create new table without volume column
+                database.execSQL("""
+                    CREATE TABLE IF NOT EXISTS alarms_new (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        hour INTEGER NOT NULL,
+                        minute INTEGER NOT NULL,
+                        days INTEGER NOT NULL,
+                        enabled INTEGER NOT NULL,
+                        label TEXT,
+                        ringtoneUri TEXT,
+                        flashPatternId TEXT,
+                        vibrationPatternId TEXT,
+                        vibrationIntensity TEXT NOT NULL DEFAULT 'MEDIUM',
+                        snoozeDurationMinutes INTEGER NOT NULL DEFAULT 10,
+                        alarmDurationMinutes INTEGER NOT NULL DEFAULT 1,
+                        scheduledDate INTEGER,
+                        createdAt INTEGER NOT NULL,
+                        updatedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+
+                // Copy data from old table to new table (excluding volume)
+                database.execSQL("""
+                    INSERT INTO alarms_new (id, hour, minute, days, enabled, label, ringtoneUri, 
+                        flashPatternId, vibrationPatternId, vibrationIntensity, snoozeDurationMinutes, 
+                        alarmDurationMinutes, scheduledDate, createdAt, updatedAt)
+                    SELECT id, hour, minute, days, enabled, label, ringtoneUri, 
+                        flashPatternId, vibrationPatternId, vibrationIntensity, snoozeDurationMinutes, 
+                        alarmDurationMinutes, scheduledDate, createdAt, updatedAt
+                    FROM alarms
+                """.trimIndent())
+
+                // Drop old table
+                database.execSQL("DROP TABLE alarms")
+
+                // Rename new table
+                database.execSQL("ALTER TABLE alarms_new RENAME TO alarms")
+
+                // Recreate index
+                database.execSQL("CREATE INDEX IF NOT EXISTS index_alarms_enabled ON alarms(enabled)")
+            }
+        }
 
         fun getInstance(context: Context): AlarmDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -43,7 +75,7 @@ abstract class AlarmDatabase : RoomDatabase() {
                     AlarmDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_3_4)
                     .build()
                 INSTANCE = instance
                 instance

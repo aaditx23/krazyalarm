@@ -151,31 +151,6 @@ fun VolumeCard(
                 )
             }
 
-            if (isOverclocked) {
-                Column(modifier = Modifier.padding(top = 8.dp)) {
-                    Text(
-                        text = "⚠️ Overclocked: Using LoudnessEnhancer for real volume boost - may cause distortion",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFFF6B35)
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    val gainDb = (20 * kotlin.math.log10(sliderValue / 100.0)).toInt()
-                    Text(
-                        text = "🎚️ Boost: +${gainDb}dB (${String.format(java.util.Locale.US, "%.1f", sliderValue / 100f)}x louder)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFFF6B35),
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            } else {
-                Text(
-                    text = "Slide past 100% to enable LoudnessEnhancer audio boost (up to 150%)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-
             // Test button
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedButton(

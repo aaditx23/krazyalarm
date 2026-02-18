@@ -31,4 +31,19 @@ interface AlarmDao {
 
     @Query("SELECT * FROM alarms WHERE enabled = 1")
     suspend fun getEnabledAlarms(): List<AlarmEntity>
+
+    @Query("SELECT * FROM alarms ORDER BY hour, minute")
+    suspend fun getAllAlarms(): List<AlarmEntity>
+
+    @Query("""
+        SELECT * FROM alarms 
+        WHERE hour = :hour 
+        AND minute = :minute 
+        AND (
+            (:scheduledDate IS NULL AND scheduledDate IS NULL) 
+            OR (scheduledDate = :scheduledDate)
+        )
+        AND id != :excludeId
+    """)
+    suspend fun findDuplicateAlarm(hour: Int, minute: Int, scheduledDate: Long?, excludeId: Long): List<AlarmEntity>
 }

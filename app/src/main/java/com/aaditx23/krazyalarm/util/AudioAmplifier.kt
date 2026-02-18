@@ -35,8 +35,17 @@ class AudioAmplifier(private val context: Context) {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
             val maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM)
 
-            // Set system volume to maximum for best quality
-            audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, maxVolume, 0)
+            // Set system volume based on volumePercent
+            if (volumePercent <= 100) {
+                // For 1-100%, set system volume proportionally
+                val systemVolume = ((volumePercent / 100.0) * maxVolume).roundToInt().coerceIn(1, maxVolume)
+                audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, systemVolume, 0)
+                Log.d(TAG, "System volume: $systemVolume/$maxVolume (${volumePercent}%)")
+            } else {
+                // For >100%, set system volume to maximum (we'll use enhancer for boost)
+                audioManager.setStreamVolume(android.media.AudioManager.STREAM_ALARM, maxVolume, 0)
+                Log.d(TAG, "System volume: MAX, applying boost via LoudnessEnhancer")
+            }
 
             // Determine which URI to use (with fallback to default)
             val finalUri = when {

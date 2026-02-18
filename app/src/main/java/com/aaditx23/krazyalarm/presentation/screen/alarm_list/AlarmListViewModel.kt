@@ -7,6 +7,7 @@ import com.aaditx23.krazyalarm.domain.models.AlarmInput
 import com.aaditx23.krazyalarm.domain.models.FlashPattern
 import com.aaditx23.krazyalarm.domain.models.VibrationIntensity
 import com.aaditx23.krazyalarm.domain.models.VibrationPattern
+import com.aaditx23.krazyalarm.domain.usecase.CheckDuplicateAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.CreateAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
@@ -32,6 +33,7 @@ class AlarmListViewModel(
     private val getAlarmByIdUseCase: GetAlarmByIdUseCase,
     private val createAlarmUseCase: CreateAlarmUseCase,
     private val updateAlarmUseCase: UpdateAlarmUseCase,
+    private val checkDuplicateAlarmUseCase: CheckDuplicateAlarmUseCase,
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
@@ -103,7 +105,6 @@ class AlarmListViewModel(
             val defaultFlashPatternId = settingsRepository.defaultFlashPattern.first()
             val defaultVibrationPatternId = settingsRepository.defaultVibrationPattern.first()
             val defaultSnoozeDuration = settingsRepository.snoozeDefaultMinutes.first()
-            val defaultVolume = settingsRepository.defaultVolume.first()
             val defaultAlarmDuration = settingsRepository.alarmDurationMinutes.first()
 
             _editState.value = AlarmEditState(
@@ -111,7 +112,6 @@ class AlarmListViewModel(
                 minute = currentTime.get(java.util.Calendar.MINUTE),
                 flashPattern = FlashPattern.fromId(defaultFlashPatternId),
                 vibrationPattern = VibrationPattern.fromId(defaultVibrationPatternId),
-                volume = defaultVolume,
                 snoozeDurationMinutes = defaultSnoozeDuration,
                 alarmDurationMinutes = defaultAlarmDuration
             )
@@ -141,7 +141,6 @@ class AlarmListViewModel(
                         flashPattern = FlashPattern.fromId(alarm.flashPatternId),
                         vibrationPattern = VibrationPattern.fromId(alarm.vibrationPatternId),
                         vibrationIntensity = alarm.vibrationIntensity,
-                        volume = alarm.volume,
                         snoozeDurationMinutes = alarm.snoozeDurationMinutes,
                         alarmDurationMinutes = alarm.alarmDurationMinutes,
                         ringtoneUri = alarm.ringtoneUri,
@@ -157,18 +156,22 @@ class AlarmListViewModel(
     }
 
     fun updateHour(hour: Int) {
-        _editState.value = _editState.value.copy(hour = hour)
+        android.util.Log.d("AlarmListViewModel", "updateHour: $hour, clearing duplicateError")
+        _editState.value = _editState.value.copy(hour = hour, duplicateError = null)
     }
 
     fun updateMinute(minute: Int) {
-        _editState.value = _editState.value.copy(minute = minute)
+        android.util.Log.d("AlarmListViewModel", "updateMinute: $minute, clearing duplicateError")
+        _editState.value = _editState.value.copy(minute = minute, duplicateError = null)
     }
 
     fun updateDays(days: Int) {
+        android.util.Log.d("AlarmListViewModel", "updateDays: $days, clearing duplicateError and scheduledDate=${if (days != 0) null else _editState.value.scheduledDate}")
         _editState.value = _editState.value.copy(
             days = days,
             // Clear scheduled date when selecting recurring days
-            scheduledDate = if (days != 0) null else _editState.value.scheduledDate
+            scheduledDate = if (days != 0) null else _editState.value.scheduledDate,
+            duplicateError = null
         )
     }
 
@@ -192,10 +195,6 @@ class AlarmListViewModel(
         _editState.value = _editState.value.copy(vibrationIntensity = vibrationIntensity)
     }
 
-    fun updateVolume(volume: Int) {
-        _editState.value = _editState.value.copy(volume = volume.coerceIn(1, 150))
-    }
-
     fun updateSnoozeDuration(snoozeDurationMinutes: Int) {
         _editState.value = _editState.value.copy(snoozeDurationMinutes = snoozeDurationMinutes)
     }
@@ -209,12 +208,39 @@ class AlarmListViewModel(
     }
 
     fun updateScheduledDate(dateMillis: Long?) {
-        _editState.value = _editState.value.copy(scheduledDate = dateMillis)
+        android.util.Log.d("AlarmListViewModel", "updateScheduledDate: $dateMillis, clearing duplicateError")
+        _editState.value = _editState.value.copy(scheduledDate = dateMillis, duplicateError = null)
     }
 
     fun saveAlarm() {
         viewModelScope.launch {
+            // Set saving state
+            _editState.value = _editState.value.copy(isSaving = true, duplicateError = null)
+
             val state = _editState.value
+
+            android.util.Log.d("AlarmListViewModel", "saveAlarm: hour=${state.hour}, minute=${state.minute}, days=${state.days}, scheduledDate=${state.scheduledDate}, editingAlarmId=$editingAlarmId")
+
+            // Check for duplicate alarm using use case
+            // For one-time alarms (days == 0), check hour + minute + scheduledDate
+            // For recurring alarms (days != 0), check hour + minute (scheduledDate will be null for both)
+            val isDuplicate = checkDuplicateAlarmUseCase(
+                hour = state.hour,
+                minute = state.minute,
+                scheduledDate = state.scheduledDate,
+                excludeId = editingAlarmId
+            )
+
+            android.util.Log.d("AlarmListViewModel", "isDuplicate=$isDuplicate")
+
+            if (isDuplicate) {
+                _editState.value = _editState.value.copy(
+                    isSaving = false,
+                    duplicateError = "An alarm with the same time and date already exists"
+                )
+                return@launch
+            }
+
             val alarmInput = AlarmInput(
                 hour = state.hour,
                 minute = state.minute,
@@ -225,7 +251,6 @@ class AlarmListViewModel(
                 flashPatternId = state.flashPattern.id,
                 vibrationPatternId = state.vibrationPattern.id,
                 vibrationIntensity = state.vibrationIntensity,
-                volume = state.volume,
                 snoozeDurationMinutes = state.snoozeDurationMinutes,
                 alarmDurationMinutes = state.alarmDurationMinutes,
                 scheduledDate = state.scheduledDate
@@ -239,14 +264,17 @@ class AlarmListViewModel(
                 }
 
                 if (result.isSuccess) {
+                    _editState.value = _editState.value.copy(isSaving = false)
                     val alarm = result.getOrThrow()
                     val message = formatAlarmScheduleMessage(alarm)
                     _editEvents.value = AlarmEditEvent.SaveSuccessWithMessage(message)
                     loadAlarms() // Refresh list
                 } else {
+                    _editState.value = _editState.value.copy(isSaving = false)
                     _editEvents.value = AlarmEditEvent.SaveError(result.exceptionOrNull()?.message ?: "Unknown error")
                 }
             } catch (e: Exception) {
+                _editState.value = _editState.value.copy(isSaving = false)
                 _editEvents.value = AlarmEditEvent.SaveError("Failed to save alarm: ${e.message}")
             }
         }
@@ -324,15 +352,16 @@ class AlarmListViewModel(
     }
 
     private fun formatAlarmScheduleMessage(alarm: com.aaditx23.krazyalarm.domain.models.Alarm): String {
-        val calendar = java.util.Calendar.getInstance()
         val now = System.currentTimeMillis()
 
         // Calculate the actual trigger time using the same logic as AlarmScheduler
         val triggerTime = calculateTriggerTime(alarm)
         val diffMillis = triggerTime - now
 
-        val hours = diffMillis / 3600000
-        val minutes = (diffMillis % 3600000) / 60000
+        // Round up to next minute if there are remaining seconds
+        val totalMinutes = kotlin.math.ceil(diffMillis / 60000.0).toLong()
+        val hours = totalMinutes / 60
+        val minutes = totalMinutes % 60
 
         // Check if it's today or tomorrow
         val triggerCalendar = java.util.Calendar.getInstance().apply {

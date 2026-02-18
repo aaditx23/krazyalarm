@@ -68,6 +68,7 @@ fun AlarmRingingScreen(
                 AlarmRingingContent(
                     alarm = state.alarm,
                     currentTime = currentTime,
+                    alarmStartTime = state.alarmStartTime,
                     scale = scale,
                     onDismiss = onDismiss,
                     onSnooze = onSnooze,
@@ -102,6 +103,7 @@ fun AlarmRingingScreen(
 private fun AlarmRingingContent(
     alarm: com.aaditx23.krazyalarm.domain.models.Alarm,
     currentTime: String,
+    alarmStartTime: String,
     scale: Float,
     onDismiss: () -> Unit,
     onSnooze: () -> Unit,
@@ -121,9 +123,12 @@ private fun AlarmRingingContent(
             Spacer(modifier = Modifier.height(60.dp))
 
             // Time Display
+            val scheduledTime = String.format(Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute)
             AlarmTimeDisplay(
                 dateString = viewModel.getCurrentDateString(),
-                currentTime = currentTime
+                currentTime = currentTime,
+                scheduledTime = scheduledTime,
+                alarmStartTime = alarmStartTime
             )
 
             Spacer(modifier = Modifier.height(60.dp))

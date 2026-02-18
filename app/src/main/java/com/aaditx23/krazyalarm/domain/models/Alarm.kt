@@ -11,7 +11,6 @@ data class Alarm(
     val flashPatternId: String? = null,
     val vibrationPatternId: String? = null,
     val vibrationIntensity: VibrationIntensity = VibrationIntensity.MEDIUM,
-    val volume: Int = 100, // Volume percentage (1-150 for overclock)
     val snoozeDurationMinutes: Int = 10,
     val alarmDurationMinutes: Int = 1, // How long the alarm will ring (1-5 minutes)
     val scheduledDate: Long? = null, // Specific date in millis for one-time alarms
@@ -29,7 +28,6 @@ data class AlarmInput(
     val flashPatternId: String? = null,
     val vibrationPatternId: String? = null,
     val vibrationIntensity: VibrationIntensity = VibrationIntensity.MEDIUM,
-    val volume: Int = 100,
     val snoozeDurationMinutes: Int = 10,
     val alarmDurationMinutes: Int = 1,
     val scheduledDate: Long? = null

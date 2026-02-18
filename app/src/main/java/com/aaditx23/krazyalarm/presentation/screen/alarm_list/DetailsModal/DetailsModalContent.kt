@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -166,12 +168,24 @@ fun DetailsModalContent(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Show duplicate error if exists
+        state.duplicateError?.let { error ->
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
         // Action Buttons (Delete and Save)
         ActionButtons(
             onDelete = onDelete,
             onSave = onSaveAlarm,
             isEditMode = state.isEditMode,
             isLoading = state.isLoading,
+            isSaving = state.isSaving,
             onDismiss = onDismiss,
             modifier = Modifier.padding(horizontal = 24.dp)
         )
