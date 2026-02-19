@@ -4,7 +4,7 @@ import com.aaditx23.krazyalarm.domain.models.FlashPattern
 import com.aaditx23.krazyalarm.domain.models.VibrationIntensity
 import com.aaditx23.krazyalarm.domain.models.VibrationPattern
 
-data class AlarmEditState(
+data class DetailsModalState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val isLoadingRingtone: Boolean = false,

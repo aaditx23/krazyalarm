@@ -125,7 +125,7 @@ fun DetailsModalContent(
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         // Sound Card
         SoundCard(
@@ -135,7 +135,7 @@ fun DetailsModalContent(
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         // Flash Pattern Card
         FlashPatternCard(
@@ -144,7 +144,7 @@ fun DetailsModalContent(
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         // Vibration Pattern Card
         VibrationPatternCard(

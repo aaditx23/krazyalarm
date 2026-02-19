@@ -28,8 +28,8 @@ class DetailsModalViewModel(
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
-    private val _editState = MutableStateFlow(AlarmEditState())
-    val editState: StateFlow<AlarmEditState> = _editState.asStateFlow()
+    private val _editState = MutableStateFlow(DetailsModalState())
+    val editState: StateFlow<DetailsModalState> = _editState.asStateFlow()
 
     private val _editEvents = MutableStateFlow<AlarmEditEvent?>(null)
     val editEvents: StateFlow<AlarmEditEvent?> = _editEvents.asStateFlow()
@@ -50,7 +50,7 @@ class DetailsModalViewModel(
             val defaultSnoozeDuration = settingsRepository.snoozeDefaultMinutes.first()
             val defaultAlarmDuration = settingsRepository.alarmDurationMinutes.first()
 
-            _editState.value = AlarmEditState(
+            _editState.value = DetailsModalState(
                 hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
                 minute = currentTime.get(java.util.Calendar.MINUTE),
                 flashPattern = FlashPattern.fromId(defaultFlashPatternId),
@@ -76,7 +76,7 @@ class DetailsModalViewModel(
             try {
                 val alarm = getAlarmByIdUseCase(id)
                 if (alarm != null) {
-                    _editState.value = AlarmEditState(
+                    _editState.value = DetailsModalState(
                         isLoading = false,
                         isEditMode = true,
                         hour = alarm.hour,
@@ -381,7 +381,7 @@ class DetailsModalViewModel(
     fun reset() {
         android.util.Log.d("DetailsModalViewModel", "=== RESET called - clearing all state ===")
         editingAlarmId = null
-        _editState.value = AlarmEditState()
+        _editState.value = DetailsModalState()
         _editEvents.value = null
     }
 }

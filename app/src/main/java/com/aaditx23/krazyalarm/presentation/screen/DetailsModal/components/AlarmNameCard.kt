@@ -39,7 +39,7 @@ fun AlarmNameCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(topEnd = 12.dp, topStart = 12.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
     ) {
         Row(
             modifier = Modifier

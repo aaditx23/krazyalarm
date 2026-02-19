@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,7 +37,9 @@ fun TimeDisplaySection(
         // Time Display
         Row(
             verticalAlignment = Alignment.Bottom,
-            modifier = Modifier.clickable(onClick = onTimeClick)
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(onClick = onTimeClick)
         ) {
             // Convert 24h to 12h format
             val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
