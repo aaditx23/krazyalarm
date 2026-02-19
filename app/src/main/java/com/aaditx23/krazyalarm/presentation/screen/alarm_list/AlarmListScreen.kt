@@ -1,20 +1,12 @@
 package com.aaditx23.krazyalarm.presentation.screen.alarm_list
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -22,21 +14,16 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,85 +32,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.presentation.components.EmptyState
 import com.aaditx23.krazyalarm.presentation.components.ErrorState
 import com.aaditx23.krazyalarm.presentation.components.LoadingState
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.AlarmEditEvent
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.DetailsModalContent
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.DetailsModalSheet
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.DetailsModalViewModel
+
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.components.AlarmItemCard
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmListScreen(
-    viewModel: AlarmListViewModel,
+    viewModel: AlarmListViewModel = koinViewModel(),
+    detailsViewModel: DetailsModalViewModel = koinViewModel(),
     onNavigateToSettings: () -> Unit = {}
 ) {
-    val context = androidx.compose.ui.platform.LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val editState by viewModel.editState.collectAsState()
-    val editEvents by viewModel.editEvents.collectAsState()
     val uiEvents by viewModel.uiEvents.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
 
-    val ringtonePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val uri = result.data?.getParcelableExtra<android.net.Uri>(android.media.RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            viewModel.updateRingtoneUri(uri?.toString())
-
-            // Get ringtone name
-            val ringtoneName = if (uri != null) {
-                val ringtone = android.media.RingtoneManager.getRingtone(context, uri)
-                val title = ringtone?.getTitle(context) ?: "Unknown"
-
-                // Check if it's the default system alarm
-                val defaultUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
-                // Only add (Default) suffix if title doesn't already contain "Default" and it IS the default URI
-                if (uri == defaultUri && !title.contains("Default", ignoreCase = true)) {
-                    "$title (Default)"
-                } else {
-                    title
-                }
-            } else {
-                // User selected "None" or cancelled - get default alarm ringtone name
-                val defaultUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
-                val ringtone = android.media.RingtoneManager.getRingtone(context, defaultUri)
-                ringtone?.getTitle(context) ?: "System Default"
-            }
-            viewModel.updateRingtoneName(ringtoneName)
-        }
-    }
-
-    LaunchedEffect(editEvents) {
-        editEvents?.let { event ->
-            when (event) {
-                is AlarmEditEvent.SaveSuccessWithTime -> {
-                    viewModel.showSheet(false)
-                    kotlinx.coroutines.delay(300) // Wait for sheet to dismiss
-                    snackbarHostState.showSnackbar("Alarm set for ${event.hours} hours and ${event.minutes} minutes from now")
-                }
-                is AlarmEditEvent.SaveSuccessWithMessage -> {
-                    viewModel.showSheet(false)
-                    kotlinx.coroutines.delay(300) // Wait for sheet to dismiss
-                    snackbarHostState.showSnackbar(event.message)
-                }
-                is AlarmEditEvent.SaveError -> {
-                    snackbarHostState.showSnackbar("Error: ${event.message}")
-                }
-                AlarmEditEvent.SaveSuccess -> {
-                    viewModel.showSheet(false)
-                }
-            }
-            viewModel.consumeEditEvent()
-        }
-    }
-
+    // Handle UI events (toggle alarm success/error messages)
     LaunchedEffect(uiEvents) {
         uiEvents?.let { event ->
             when (event) {
@@ -135,36 +68,6 @@ fun AlarmListScreen(
                 }
             }
             viewModel.consumeUiEvent()
-        }
-    }
-
-    // Resolve ringtone name when editing an existing alarm or creating a new one
-    LaunchedEffect(editState.ringtoneUri, editState.isEditMode, uiState.showSheet) {
-        if (uiState.showSheet && editState.ringtoneName == "Default") {
-            try {
-                val uri = if (editState.ringtoneUri != null) {
-                    android.net.Uri.parse(editState.ringtoneUri)
-                } else {
-                    // No URI means use system default
-                    android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
-                }
-
-                val ringtone = android.media.RingtoneManager.getRingtone(context, uri)
-                val title = ringtone?.getTitle(context) ?: "System Default"
-
-                // Check if it's the default system alarm
-                val defaultUri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
-                // Only add (Default) suffix if title doesn't already contain "Default" and it IS the default
-                val name = if ((editState.ringtoneUri == null || uri == defaultUri) && !title.contains("Default", ignoreCase = true)) {
-                    "$title (Default)"
-                } else {
-                    title
-                }
-
-                viewModel.updateRingtoneName(name)
-            } catch (e: Exception) {
-                // If we can't get the name, keep the default
-            }
         }
     }
 
@@ -194,7 +97,7 @@ fun AlarmListScreen(
         floatingActionButton = {
             if (!uiState.isSelectMode) {
                 FloatingActionButton(onClick = {
-                    viewModel.startCreateAlarm()
+                    detailsViewModel.startCreateAlarm()
                     viewModel.showSheet(true)
                 }) {
                     Icon(Icons.Default.Add, contentDescription = "Add Alarm")
@@ -241,7 +144,7 @@ fun AlarmListScreen(
                                 },
                                 onEdit = {
                                     if (!uiState.isSelectMode) {
-                                        viewModel.startEditAlarm(alarm.id)
+                                        detailsViewModel.startEditAlarm(alarm.id)
                                         viewModel.showSheet(true)
                                     }
                                 },
@@ -287,108 +190,16 @@ fun AlarmListScreen(
         )
     }
 
+    // Details Modal Sheet
     if (uiState.showSheet) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                viewModel.showSheet(false)
-            },
+        DetailsModalSheet(
             sheetState = sheetState,
-            dragHandle = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .padding(top = 12.dp)
-                            .width(32.dp)
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                            )
-                    )
-                }
-            }
-        ) {
-            DetailsModalContent(
-                onSave = {
-                    viewModel.showSheet(false)
-                    viewModel.loadAlarms() // Refresh the list
-                },
-                state = editState,
-                events = editEvents,
-                onConsumeEvent = viewModel::consumeEditEvent,
-                onUpdateHour = viewModel::updateHour,
-                onUpdateMinute = viewModel::updateMinute,
-                onUpdateDays = viewModel::updateDays,
-                onUpdateEnabled = viewModel::updateEnabled,
-                onUpdateLabel = viewModel::updateLabel,
-                onUpdateFlashPattern = viewModel::updateFlashPattern,
-                onUpdateVibrationPattern = viewModel::updateVibrationPattern,
-                onUpdateVibrationIntensity = viewModel::updateVibrationIntensity,
-                onUpdateSnoozeDuration = viewModel::updateSnoozeDuration,
-                onSaveAlarm = viewModel::saveAlarm,
-                modifier = Modifier,
-                onDelete = viewModel::deleteCurrentAlarm,
-                onDismiss = { viewModel.showSheet(false) },
-                onSoundClick = {
-                    val intent = android.content.Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_ALARM)
-                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TITLE, "Select Alarm Sound")
-                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, editState.ringtoneUri?.let { android.net.Uri.parse(it) })
-                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
-                        putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-                    }
-                    ringtonePickerLauncher.launch(intent)
-                },
-                onScheduleClick = { viewModel.showDatePicker(true) },
-                onUpdateRingtoneUri = viewModel::updateRingtoneUri,
-            )
-        }
-
-        LaunchedEffect(sheetState.isVisible) {
-            if (sheetState.isVisible) {
-                sheetState.expand()
-            }
-        }
-    }
-
-    if (uiState.showDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = editState.scheduledDate ?: System.currentTimeMillis()
-        )
-
-        DatePickerDialog(
-            onDismissRequest = { viewModel.showDatePicker(false) },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { selectedMillis ->
-                        // Set the date at the alarm's time
-                        val calendar = java.util.Calendar.getInstance().apply {
-                            timeInMillis = selectedMillis
-                            set(java.util.Calendar.HOUR_OF_DAY, editState.hour)
-                            set(java.util.Calendar.MINUTE, editState.minute)
-                            set(java.util.Calendar.SECOND, 0)
-                            set(java.util.Calendar.MILLISECOND, 0)
-                        }
-
-                        viewModel.updateScheduledDate(calendar.timeInMillis)
-                        // Clear recurring days when scheduling for specific date
-                        viewModel.updateDays(0)
-                    }
-                    viewModel.showDatePicker(false)
-                }) {
-                    Text("OK")
-                }
+            onDismiss = { viewModel.showSheet(false) },
+            onAlarmSaved = {
+                viewModel.showSheet(false)
+                viewModel.loadAlarms()
             },
-            dismissButton = {
-                TextButton(onClick = { viewModel.showDatePicker(false) }) {
-                    Text("Cancel")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+            viewModel = detailsViewModel
+        )
     }
 }

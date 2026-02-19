@@ -1,4 +1,4 @@
-package com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal
+package com.aaditx23.krazyalarm.presentation.screen.DetailsModal
 
 import com.aaditx23.krazyalarm.domain.models.FlashPattern
 import com.aaditx23.krazyalarm.domain.models.VibrationIntensity
@@ -7,6 +7,7 @@ import com.aaditx23.krazyalarm.domain.models.VibrationPattern
 data class AlarmEditState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
+    val isLoadingRingtone: Boolean = false,
     val isEditMode: Boolean = false,
     val hour: Int = 0,
     val minute: Int = 0,
@@ -19,7 +20,7 @@ data class AlarmEditState(
     val snoozeDurationMinutes: Int = 10,
     val alarmDurationMinutes: Int = 1,
     val ringtoneUri: String? = null,
-    val ringtoneName: String = "Default",
+    val ringtoneName: String = "",
     val scheduledDate: Long? = null, // Specific date in millis for one-time alarms (when days == 0)
     val duplicateError: String? = null
 )

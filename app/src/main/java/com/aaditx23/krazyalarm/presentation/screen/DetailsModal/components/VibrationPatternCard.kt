@@ -1,4 +1,4 @@
-package com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components
+package com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FlashOn
+import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,7 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun FlashPatternCard(
+fun VibrationPatternCard(
     patternName: String,
     onPatternClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -51,14 +51,14 @@ fun FlashPatternCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.FlashOn,
+                    imageVector = Icons.Outlined.Vibration,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.size(16.dp))
                 Text(
-                    text = "Flash Pattern",
+                    text = "Vibration Pattern",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -21,11 +21,12 @@ import com.aaditx23.krazyalarm.presentation.screen.settings.SettingsViewModel
 import com.aaditx23.krazyalarm.presentation.screen.settings.ledpatterns.components.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LEDPatternsScreen(
-    viewModel: SettingsViewModel,
+    viewModel: SettingsViewModel = koinViewModel(),
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current

@@ -21,11 +21,12 @@ import com.aaditx23.krazyalarm.presentation.screen.settings.vibrationpatterns.co
 import com.aaditx23.krazyalarm.presentation.screen.settings.vibrationpatterns.components.VibrationPatternCard
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VibrationPatternsScreen(
-    viewModel: SettingsViewModel,
+    viewModel: SettingsViewModel = koinViewModel(),
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current

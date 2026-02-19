@@ -1,4 +1,4 @@
-package com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components
+package com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

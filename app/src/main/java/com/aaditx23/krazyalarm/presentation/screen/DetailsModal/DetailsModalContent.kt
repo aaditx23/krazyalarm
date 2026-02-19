@@ -1,4 +1,4 @@
-package com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal
+package com.aaditx23.krazyalarm.presentation.screen.DetailsModal
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,45 +19,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.aaditx23.krazyalarm.domain.models.FlashPattern
-import com.aaditx23.krazyalarm.domain.models.VibrationIntensity
-import com.aaditx23.krazyalarm.domain.models.VibrationPattern
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.ActionButtons
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.AlarmNameCard
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.DaySelectorSection
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.FlashPatternCard
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.FlashPatternSelectionDialog
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.ScheduleAlarmButton
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.SoundCard
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.TimeDisplaySection
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.TimePickerDialog
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.UpcomingAlarmSection
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.VibrationPatternCard
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components.VibrationPatternSelectionDialog
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.ActionButtons
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.AlarmNameCard
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.DaySelectorSection
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.FlashPatternCard
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.FlashPatternSelectionDialog
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.ScheduleAlarmButton
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.SoundCard
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimeDisplaySection
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimePickerDialog
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.UpcomingAlarmSection
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.VibrationPatternCard
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.VibrationPatternSelectionDialog
 
 @Composable
 fun DetailsModalContent(
-    onSave: () -> Unit,
-    state: AlarmEditState,
-    events: AlarmEditEvent?,
-    onConsumeEvent: () -> Unit,
-    onUpdateHour: (Int) -> Unit,
-    onUpdateMinute: (Int) -> Unit,
-    onUpdateDays: (Int) -> Unit,
-    onUpdateEnabled: (Boolean) -> Unit,
-    onUpdateLabel: (String) -> Unit,
-    onUpdateFlashPattern: (FlashPattern) -> Unit,
-    onUpdateVibrationPattern: (VibrationPattern) -> Unit,
-    onUpdateVibrationIntensity: (VibrationIntensity) -> Unit,
-    onUpdateSnoozeDuration: (Int) -> Unit,
-    onSaveAlarm: () -> Unit,
-    modifier: Modifier = Modifier,
-    onDelete: () -> Unit = {},
-    onDismiss: () -> Unit = {},
-    onSoundClick: () -> Unit = {},
-    onScheduleClick: () -> Unit = {},
-    onUpdateRingtoneUri: (String?) -> Unit,
+    viewModel: DetailsModalViewModel,
+    onDismiss: () -> Unit,
+    onSoundClick: () -> Unit,
+    onScheduleClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val state by viewModel.editState.collectAsState()
+    val events by viewModel.editEvents.collectAsState()
+
     var showTimePicker by remember { mutableStateOf(false) }
     var showFlashPatternDialog by remember { mutableStateOf(false) }
     var showVibrationPatternDialog by remember { mutableStateOf(false) }
@@ -103,7 +89,7 @@ fun DetailsModalContent(
         // Day Selector
         DaySelectorSection(
             selectedDays = state.days,
-            onDaysChange = onUpdateDays,
+            onDaysChange = viewModel::updateDays,
             modifier = Modifier.padding(horizontal = 24.dp)
         )
 
@@ -135,7 +121,7 @@ fun DetailsModalContent(
         // Alarm Name Card
         AlarmNameCard(
             label = state.label,
-            onLabelChange = onUpdateLabel,
+            onLabelChange = viewModel::updateLabel,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
@@ -144,6 +130,7 @@ fun DetailsModalContent(
         // Sound Card
         SoundCard(
             soundName = state.ringtoneName,
+            isLoading = state.isLoadingRingtone,
             onSoundClick = onSoundClick,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -181,8 +168,11 @@ fun DetailsModalContent(
 
         // Action Buttons (Delete and Save)
         ActionButtons(
-            onDelete = onDelete,
-            onSave = onSaveAlarm,
+            onDelete = {
+                viewModel.deleteAlarm()
+                onDismiss()
+            },
+            onSave = viewModel::saveAlarm,
             isEditMode = state.isEditMode,
             isLoading = state.isLoading,
             isSaving = state.isSaving,
@@ -198,8 +188,8 @@ fun DetailsModalContent(
         TimePickerDialog(
             initialHour = state.hour,
             initialMinute = state.minute,
-            onHourChange = { onUpdateHour(it) },
-            onMinuteChange = { onUpdateMinute(it) },
+            onHourChange = viewModel::updateHour,
+            onMinuteChange = viewModel::updateMinute,
             onDismiss = { showTimePicker = false }
         )
     }
@@ -208,7 +198,7 @@ fun DetailsModalContent(
     if (showFlashPatternDialog) {
         FlashPatternSelectionDialog(
             selectedPattern = state.flashPattern,
-            onPatternSelected = onUpdateFlashPattern,
+            onPatternSelected = viewModel::updateFlashPattern,
             onDismiss = { showFlashPatternDialog = false }
         )
     }
@@ -217,7 +207,7 @@ fun DetailsModalContent(
     if (showVibrationPatternDialog) {
         VibrationPatternSelectionDialog(
             selectedPattern = state.vibrationPattern,
-            onPatternSelected = onUpdateVibrationPattern,
+            onPatternSelected = viewModel::updateVibrationPattern,
             onDismiss = { showVibrationPatternDialog = false }
         )
     }

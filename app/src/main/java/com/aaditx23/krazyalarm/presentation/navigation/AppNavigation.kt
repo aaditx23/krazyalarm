@@ -8,11 +8,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.aaditx23.krazyalarm.data.util.PermissionUtils
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.AlarmListScreen
-import com.aaditx23.krazyalarm.presentation.screen.alarm_list.AlarmListViewModel
+import com.aaditx23.krazyalarm.presentation.screen.alarm_ringing.AlarmRingingActivity
 import com.aaditx23.krazyalarm.presentation.screen.permissions.PermissionsScreen
 import com.aaditx23.krazyalarm.presentation.screen.settings.SettingsScreen
-import com.aaditx23.krazyalarm.presentation.screen.settings.SettingsViewModel
-import org.koin.androidx.compose.koinViewModel
+import com.aaditx23.krazyalarm.presentation.screen.settings.ledpatterns.LEDPatternsScreen
+import com.aaditx23.krazyalarm.presentation.screen.settings.vibrationpatterns.VibrationPatternsScreen
 
 @Composable
 fun AppNavigation(
@@ -43,9 +43,7 @@ fun AppNavigation(
         }
 
         composable(Screen.AlarmList.route) {
-            val viewModel: AlarmListViewModel = koinViewModel()
             AlarmListScreen(
-                viewModel = viewModel,
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
                 }
@@ -53,9 +51,7 @@ fun AppNavigation(
         }
 
         composable(Screen.Settings.route) {
-            val viewModel: SettingsViewModel = koinViewModel()
             SettingsScreen(
-                viewModel = viewModel,
                 onNavigateBack = {
                     navController.popBackStack()
                 },
@@ -67,7 +63,7 @@ fun AppNavigation(
                 },
                 onTestAlarm = {
                     // Start the AlarmRingingActivity for testing
-                    val intent = com.aaditx23.krazyalarm.presentation.screen.alarm_ringing.AlarmRingingActivity.createIntent(
+                    val intent = AlarmRingingActivity.createIntent(
                         context = context,
                         alarmId = -1L // -1 indicates a test alarm
                     )
@@ -77,9 +73,7 @@ fun AppNavigation(
         }
 
         composable(Screen.LEDPatterns.route) {
-            val viewModel: SettingsViewModel = koinViewModel()
-            com.aaditx23.krazyalarm.presentation.screen.settings.ledpatterns.LEDPatternsScreen(
-                viewModel = viewModel,
+            LEDPatternsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
@@ -87,9 +81,7 @@ fun AppNavigation(
         }
 
         composable(Screen.VibrationPatterns.route) {
-            val viewModel: SettingsViewModel = koinViewModel()
-            com.aaditx23.krazyalarm.presentation.screen.settings.vibrationpatterns.VibrationPatternsScreen(
-                viewModel = viewModel,
+            VibrationPatternsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }

@@ -13,11 +13,12 @@ import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.domain.models.FlashPattern
 import com.aaditx23.krazyalarm.domain.models.VibrationPattern
 import com.aaditx23.krazyalarm.presentation.screen.settings.components.*
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel,
+    viewModel: SettingsViewModel = koinViewModel(),
     onNavigateBack: () -> Unit,
     onNavigateToLEDPatterns: () -> Unit = {},
     onNavigateToVibrationPatterns: () -> Unit = {},

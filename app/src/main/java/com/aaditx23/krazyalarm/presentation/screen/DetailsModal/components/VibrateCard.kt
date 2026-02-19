@@ -1,6 +1,5 @@
-package com.aaditx23.krazyalarm.presentation.screen.alarm_list.DetailsModal.components
+package com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,24 +15,23 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun VibrationPatternCard(
-    patternName: String,
-    onPatternClick: () -> Unit,
+fun VibrateCard(
+    isVibrationEnabled: Boolean,
+    onVibrateChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .clickable(onClick = onPatternClick),
+            .height(64.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
@@ -58,19 +56,15 @@ fun VibrationPatternCard(
                 )
                 Spacer(modifier = Modifier.size(16.dp))
                 Text(
-                    text = "Vibration Pattern",
+                    text = "Vibrate",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Text(
-                text = patternName,
-                textAlign = TextAlign.End,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(start = 20.dp)
+            Switch(
+                checked = isVibrationEnabled,
+                onCheckedChange = onVibrateChange
             )
         }
     }
 }
-
