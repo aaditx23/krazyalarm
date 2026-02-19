@@ -37,7 +37,6 @@ import com.aaditx23.krazyalarm.presentation.components.EmptyState
 import com.aaditx23.krazyalarm.presentation.components.ErrorState
 import com.aaditx23.krazyalarm.presentation.components.LoadingState
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.DetailsModalSheet
-import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.DetailsModalViewModel
 
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.components.AlarmItemCard
 import kotlinx.coroutines.launch
@@ -47,7 +46,6 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AlarmListScreen(
     viewModel: AlarmListViewModel = koinViewModel(),
-    detailsViewModel: DetailsModalViewModel = koinViewModel(),
     onNavigateToSettings: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -97,8 +95,7 @@ fun AlarmListScreen(
         floatingActionButton = {
             if (!uiState.isSelectMode) {
                 FloatingActionButton(onClick = {
-                    detailsViewModel.startCreateAlarm()
-                    viewModel.showSheet(true)
+                    viewModel.openCreateAlarmSheet()
                 }) {
                     Icon(Icons.Default.Add, contentDescription = "Add Alarm")
                 }
@@ -144,8 +141,7 @@ fun AlarmListScreen(
                                 },
                                 onEdit = {
                                     if (!uiState.isSelectMode) {
-                                        detailsViewModel.startEditAlarm(alarm.id)
-                                        viewModel.showSheet(true)
+                                        viewModel.openEditAlarmSheet(alarm.id)
                                     }
                                 },
                                 onLongClick = {
@@ -194,12 +190,14 @@ fun AlarmListScreen(
     if (uiState.showSheet) {
         DetailsModalSheet(
             sheetState = sheetState,
-            onDismiss = { viewModel.showSheet(false) },
+            editingAlarmId = uiState.editingAlarmId,
+            onDismiss = {
+                viewModel.showSheet(false)
+            },
             onAlarmSaved = {
                 viewModel.showSheet(false)
                 viewModel.loadAlarms()
-            },
-            viewModel = detailsViewModel
+            }
         )
     }
 }

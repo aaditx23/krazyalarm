@@ -1,5 +1,6 @@
 package com.aaditx23.krazyalarm.presentation.screen.DetailsModal
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aaditx23.krazyalarm.domain.models.AlarmInput
@@ -49,11 +50,6 @@ class DetailsModalViewModel(
             val defaultSnoozeDuration = settingsRepository.snoozeDefaultMinutes.first()
             val defaultAlarmDuration = settingsRepository.alarmDurationMinutes.first()
 
-            // Preserve existing ringtone state
-            val currentRingtoneName = _editState.value.ringtoneName
-            val currentIsLoadingRingtone = _editState.value.isLoadingRingtone
-            android.util.Log.d("DetailsModalViewModel", "Preserving ringtone - name: '$currentRingtoneName', loading: $currentIsLoadingRingtone")
-
             _editState.value = AlarmEditState(
                 hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
                 minute = currentTime.get(java.util.Calendar.MINUTE),
@@ -61,10 +57,10 @@ class DetailsModalViewModel(
                 vibrationPattern = VibrationPattern.fromId(defaultVibrationPatternId),
                 snoozeDurationMinutes = defaultSnoozeDuration,
                 alarmDurationMinutes = defaultAlarmDuration,
-                ringtoneName = currentRingtoneName,
-                isLoadingRingtone = currentIsLoadingRingtone
+                ringtoneName = "",
+                isLoadingRingtone = true // Set to true so UI shows loading
             )
-            android.util.Log.d("DetailsModalViewModel", "State initialized - ringtone: '${_editState.value.ringtoneName}', loading: ${_editState.value.isLoadingRingtone}")
+            android.util.Log.d("DetailsModalViewModel", "State initialized - loading: ${_editState.value.isLoadingRingtone}")
         }
     }
 
@@ -94,7 +90,8 @@ class DetailsModalViewModel(
                         snoozeDurationMinutes = alarm.snoozeDurationMinutes,
                         alarmDurationMinutes = alarm.alarmDurationMinutes,
                         ringtoneUri = alarm.ringtoneUri,
-                        scheduledDate = alarm.scheduledDate
+                        scheduledDate = alarm.scheduledDate,
+                        isLoadingRingtone = true // Set to true so UI shows loading
                     )
                 } else {
                     _editEvents.value = AlarmEditEvent.SaveError("Alarm not found")
@@ -158,7 +155,7 @@ class DetailsModalViewModel(
         _editState.value = _editState.value.copy(ringtoneName = ringtoneName)
     }
 
-    fun fetchRingtoneName(context: android.content.Context, ringtoneUri: String? = null) {
+    fun fetchRingtoneName(context: Context, ringtoneUri: String? = null) {
         android.util.Log.d("DetailsModalViewModel", "=== fetchRingtoneName called ===")
         android.util.Log.d("DetailsModalViewModel", "ringtoneUri parameter: $ringtoneUri")
         android.util.Log.d("DetailsModalViewModel", "Current state ringtoneUri: ${_editState.value.ringtoneUri}")
@@ -378,5 +375,12 @@ class DetailsModalViewModel(
             calendar.add(java.util.Calendar.DAY_OF_YEAR, 7)
             return calendar.timeInMillis
         }
+    }
+
+    fun reset() {
+        android.util.Log.d("DetailsModalViewModel", "=== RESET called - clearing all state ===")
+        editingAlarmId = null
+        _editState.value = AlarmEditState()
+        _editEvents.value = null
     }
 }

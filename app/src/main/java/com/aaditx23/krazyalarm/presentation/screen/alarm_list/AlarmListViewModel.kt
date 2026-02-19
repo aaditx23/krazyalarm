@@ -115,6 +115,14 @@ class AlarmListViewModel(
         _uiState.value = _uiState.value.copy(showSheet = show)
     }
 
+    fun openCreateAlarmSheet() {
+        _uiState.value = _uiState.value.copy(showSheet = true, editingAlarmId = null)
+    }
+
+    fun openEditAlarmSheet(alarmId: Long) {
+        _uiState.value = _uiState.value.copy(showSheet = true, editingAlarmId = alarmId)
+    }
+
     fun showDeleteDialog(show: Boolean) {
         _uiState.value = _uiState.value.copy(showDeleteDialog = show)
     }

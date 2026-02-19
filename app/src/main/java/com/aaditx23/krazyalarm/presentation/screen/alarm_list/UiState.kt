@@ -9,5 +9,6 @@ data class UiState(
     val showSheet: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val isSelectMode: Boolean = false,
-    val selectedAlarms: Set<Long> = emptySet()
+    val selectedAlarms: Set<Long> = emptySet(),
+    val editingAlarmId: Long? = null // null = create mode, non-null = edit mode
 )

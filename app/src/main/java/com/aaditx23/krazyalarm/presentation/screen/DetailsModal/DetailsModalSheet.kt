@@ -35,11 +35,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
 import org.koin.androidx.compose.koinViewModel
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailsModalSheet(
     sheetState: SheetState,
+    editingAlarmId: Long? = null, // null = create mode, non-null = edit mode
     onDismiss: () -> Unit,
     onAlarmSaved: () -> Unit,
     viewModel: DetailsModalViewModel = koinViewModel()
@@ -48,6 +50,26 @@ fun DetailsModalSheet(
     val editState by viewModel.editState.collectAsState()
     val editEvents by viewModel.editEvents.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
+
+    // Initialize viewmodel based on mode when modal opens
+    LaunchedEffect(editingAlarmId) {
+        android.util.Log.d("DetailsModalSheet", "=== Modal opened with editingAlarmId: $editingAlarmId ===")
+        if (editingAlarmId != null) {
+            // Edit mode
+            viewModel.startEditAlarm(editingAlarmId)
+        } else {
+            // Create mode
+            viewModel.startCreateAlarm()
+        }
+    }
+
+    // Fetch ringtone name when state is ready (isLoadingRingtone = true and ringtoneName is empty)
+    LaunchedEffect(editState.isLoadingRingtone, editState.ringtoneName) {
+        if (editState.isLoadingRingtone && editState.ringtoneName.isEmpty()) {
+            android.util.Log.d("DetailsModalSheet", "State ready, fetching ringtone name...")
+            viewModel.fetchRingtoneName(context, editState.ringtoneUri)
+        }
+    }
 
     // Ringtone picker launcher
     val ringtonePickerLauncher = rememberLauncherForActivityResult(
@@ -72,11 +94,6 @@ fun DetailsModalSheet(
         }
     }
 
-    // Fetch ringtone name when modal opens
-    LaunchedEffect(Unit) {
-        android.util.Log.d("DetailsModalSheet", "=== Modal opened, triggering ringtone fetch ===")
-        viewModel.fetchRingtoneName(context)
-    }
 
     // Handle save success event
     LaunchedEffect(editEvents) {
@@ -144,12 +161,12 @@ fun DetailsModalSheet(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { selectedMillis ->
-                        val calendar = java.util.Calendar.getInstance().apply {
+                        val calendar = Calendar.getInstance().apply {
                             timeInMillis = selectedMillis
-                            set(java.util.Calendar.HOUR_OF_DAY, editState.hour)
-                            set(java.util.Calendar.MINUTE, editState.minute)
-                            set(java.util.Calendar.SECOND, 0)
-                            set(java.util.Calendar.MILLISECOND, 0)
+                            set(Calendar.HOUR_OF_DAY, editState.hour)
+                            set(Calendar.MINUTE, editState.minute)
+                            set(Calendar.SECOND, 0)
+                            set(Calendar.MILLISECOND, 0)
                         }
 
                         viewModel.updateScheduledDate(calendar.timeInMillis)
@@ -174,6 +191,10 @@ fun DetailsModalSheet(
     LaunchedEffect(sheetState.isVisible) {
         if (sheetState.isVisible) {
             sheetState.expand()
+        } else {
+            // Reset viewmodel when sheet is dismissed
+            android.util.Log.d("DetailsModalSheet", "=== Modal dismissed, resetting viewmodel ===")
+            viewModel.reset()
         }
     }
 }
