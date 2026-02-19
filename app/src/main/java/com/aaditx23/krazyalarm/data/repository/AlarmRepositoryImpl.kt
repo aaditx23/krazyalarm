@@ -85,15 +85,33 @@ class AlarmRepositoryImpl(
         return alarmDao.getEnabledAlarms().map { it.toDomain() }
     }
 
-    override suspend fun checkDuplicateAlarm(hour: Int, minute: Int, scheduledDate: Long?, excludeId: Long?): Boolean {
+    override suspend fun checkDuplicateAlarm(hour: Int, minute: Int, days: Int, scheduledDate: Long?, excludeId: Long?): Boolean {
         return try {
-            android.util.Log.d("AlarmRepository", "Checking duplicate: hour=$hour, minute=$minute, scheduledDate=$scheduledDate, excludeId=$excludeId")
-            val duplicates = alarmDao.findDuplicateAlarm(hour, minute, scheduledDate, excludeId ?: -1L)
-            android.util.Log.d("AlarmRepository", "Found ${duplicates.size} duplicate(s)")
-            duplicates.forEach {
-                android.util.Log.d("AlarmRepository", "Duplicate alarm: id=${it.id}, hour=${it.hour}, minute=${it.minute}, scheduledDate=${it.scheduledDate}")
+            android.util.Log.d("AlarmRepository", "Checking duplicate: hour=$hour, minute=$minute, days=$days, scheduledDate=$scheduledDate, excludeId=$excludeId")
+
+            // Fetch all alarms with matching hour and minute
+            val potentialDuplicates = alarmDao.findPotentialDuplicates(hour, minute, excludeId ?: -1L)
+
+            // Filter in Kotlin based on alarm type
+            val actualDuplicates = potentialDuplicates.filter { alarm ->
+                when {
+                    // One-time alarm (days == 0): must match scheduledDate
+                    days == 0 -> {
+                        alarm.days == 0 && alarm.scheduledDate == scheduledDate
+                    }
+                    // Repeating alarm (days != 0): must match days bitmask
+                    else -> {
+                        alarm.days == days
+                    }
+                }
             }
-            duplicates.isNotEmpty()
+
+            android.util.Log.d("AlarmRepository", "Found ${actualDuplicates.size} duplicate(s) out of ${potentialDuplicates.size} potential matches")
+            actualDuplicates.forEach {
+                android.util.Log.d("AlarmRepository", "Duplicate alarm: id=${it.id}, hour=${it.hour}, minute=${it.minute}, days=${it.days}, scheduledDate=${it.scheduledDate}")
+            }
+
+            actualDuplicates.isNotEmpty()
         } catch (e: Exception) {
             android.util.Log.e("AlarmRepository", "Error checking duplicate", e)
             false

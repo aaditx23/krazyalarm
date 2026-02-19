@@ -217,6 +217,7 @@ class DetailsModalViewModel(
             val isDuplicate = checkDuplicateAlarmUseCase(
                 hour = state.hour,
                 minute = state.minute,
+                days = state.days,
                 scheduledDate = state.scheduledDate,
                 excludeId = editingAlarmId
             )

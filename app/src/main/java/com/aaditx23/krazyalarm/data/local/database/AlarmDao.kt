@@ -39,11 +39,7 @@ interface AlarmDao {
         SELECT * FROM alarms 
         WHERE hour = :hour 
         AND minute = :minute 
-        AND (
-            (:scheduledDate IS NULL AND scheduledDate IS NULL) 
-            OR (scheduledDate = :scheduledDate)
-        )
         AND id != :excludeId
     """)
-    suspend fun findDuplicateAlarm(hour: Int, minute: Int, scheduledDate: Long?, excludeId: Long): List<AlarmEntity>
+    suspend fun findPotentialDuplicates(hour: Int, minute: Int, excludeId: Long): List<AlarmEntity>
 }

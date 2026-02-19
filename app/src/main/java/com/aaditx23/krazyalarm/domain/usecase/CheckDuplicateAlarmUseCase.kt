@@ -8,9 +8,10 @@ class CheckDuplicateAlarmUseCase(
     suspend operator fun invoke(
         hour: Int,
         minute: Int,
+        days: Int,
         scheduledDate: Long?,
         excludeId: Long? = null
     ): Boolean {
-        return alarmRepository.checkDuplicateAlarm(hour, minute, scheduledDate, excludeId)
+        return alarmRepository.checkDuplicateAlarm(hour, minute, days, scheduledDate, excludeId)
     }
 }
