@@ -129,19 +129,52 @@ fun AlarmItemCard(
 
 private fun getDaysOfWeekText(days: Int): String {
     val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-    val selectedDays = mutableListOf<String>()
+    val selectedIndices = mutableListOf<Int>()
 
     for (i in 0..6) {
         if ((days and (1 shl i)) != 0) {
-            selectedDays.add(dayNames[i])
+            selectedIndices.add(i)
         }
     }
+
+    val selectedDays = selectedIndices.map { dayNames[it] }
 
     return when {
         selectedDays.size == 7 -> "Every day"
         selectedDays.size == 5 && !selectedDays.contains("Sat") && !selectedDays.contains("Sun") -> "Weekdays"
         selectedDays.size == 2 && selectedDays.contains("Sat") && selectedDays.contains("Sun") -> "Weekends"
         selectedDays.isEmpty() -> "One time"
-        else -> selectedDays.joinToString(", ")
+        else -> {
+            // Group consecutive days into ranges
+            val ranges = mutableListOf<String>()
+            var rangeStart = selectedIndices[0]
+            var rangeEnd = selectedIndices[0]
+
+            for (i in 1 until selectedIndices.size) {
+                if (selectedIndices[i] == rangeEnd + 1) {
+                    // Consecutive day, extend range
+                    rangeEnd = selectedIndices[i]
+                } else {
+                    // Non-consecutive, save current range and start new one
+                    ranges.add(formatRange(dayNames, rangeStart, rangeEnd))
+                    rangeStart = selectedIndices[i]
+                    rangeEnd = selectedIndices[i]
+                }
+            }
+            // Add the last range
+            ranges.add(formatRange(dayNames, rangeStart, rangeEnd))
+
+            ranges.joinToString(", ")
+        }
+    }
+}
+
+private fun formatRange(dayNames: List<String>, start: Int, end: Int): String {
+    return if (start == end) {
+        dayNames[start]
+    } else if (end == start + 1) {
+        "${dayNames[start]}, ${dayNames[end]}"
+    } else {
+        "${dayNames[start]}-${dayNames[end]}"
     }
 }

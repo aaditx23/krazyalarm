@@ -55,8 +55,7 @@ fun DetailsModalSheet(
     val editEvents by viewModel.editEvents.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Function to dismiss with animation
-    // The sheet animates out smoothly while the composable leaves composition quickly
+    // Function to dismiss with animation // The sheet animates out smoothly while the composable leaves composition quickly
     // This prevents touch blocking and makes the UI feel more responsive
     val dismissWithAnimation: () -> Unit = {
         coroutineScope.launch {
