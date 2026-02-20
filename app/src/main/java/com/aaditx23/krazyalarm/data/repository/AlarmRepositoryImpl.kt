@@ -40,6 +40,16 @@ class AlarmRepositoryImpl(
         }
     }
 
+    override suspend fun updateAlarmDirect(alarm: Alarm): Result<Unit> {
+        return try {
+            val entity = alarm.toEntity()
+            alarmDao.update(entity)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun deleteAlarm(id: Long): Result<Unit> {
         return try {
             alarmDao.deleteById(id)
@@ -150,6 +160,26 @@ class AlarmRepositoryImpl(
             flashPatternId = flashPatternId,
             vibrationPatternId = vibrationPatternId,
             vibrationIntensity = VibrationIntensity.valueOf(vibrationIntensity),
+            snoozeDurationMinutes = snoozeDurationMinutes,
+            alarmDurationMinutes = alarmDurationMinutes,
+            scheduledDate = scheduledDate,
+            createdAt = createdAt,
+            updatedAt = updatedAt
+        )
+    }
+
+    private fun Alarm.toEntity(): AlarmEntity {
+        return AlarmEntity(
+            id = id,
+            hour = hour,
+            minute = minute,
+            days = days,
+            enabled = enabled,
+            label = label,
+            ringtoneUri = ringtoneUri,
+            flashPatternId = flashPatternId,
+            vibrationPatternId = vibrationPatternId,
+            vibrationIntensity = vibrationIntensity.name,
             snoozeDurationMinutes = snoozeDurationMinutes,
             alarmDurationMinutes = alarmDurationMinutes,
             scheduledDate = scheduledDate,

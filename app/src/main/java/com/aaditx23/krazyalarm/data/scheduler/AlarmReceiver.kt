@@ -26,6 +26,9 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
                     // Reschedule if repeating
                     if (alarm.days != 0) {
                         alarmScheduler.scheduleAlarm(alarm)
+                    } else {
+                        // One-time alarm - disable it after it rings
+                        alarmRepository.toggleAlarm(alarmId, false)
                     }
                 }
             }
