@@ -28,6 +28,14 @@ Built with modern Android architecture, KrazyAlarm combines **powerful flash ale
   <img src="screenshots/08.png" width="200" alt="Settings"/>
 </div>
 
+### 🎮 Moving Buttons Challenge
+
+<div align="center">
+  <img src="screenshots/09.mp4" width="400" alt="Alarm Screen with Moving Buttons"/>
+</div>
+
+*The alarm screen features moving dismiss/snooze buttons that bounce around the screen with physics-based collision detection, making it harder to accidentally dismiss your alarm while half-asleep!*
+
 
 ## ✨ Features
 
@@ -57,13 +65,6 @@ Built with modern Android architecture, KrazyAlarm combines **powerful flash ale
   - Adjustable snooze duration
   - Configurable alarm duration (1-5 minutes)
   - System ringtone picker integration
-### 🎮 Moving Buttons Challenge
-
-<div align="center">
-  <video src="screenshots/09.mp4" width="300" alt="Alarm Screen with Moving Buttons"/>
-</div>
-
-The alarm screen features moving dismiss/snooze buttons that bounce around the screen, making it harder to accidentally dismiss your alarm while half-asleep!
 
 ### 📳 Haptic Feedback
 - **Vibration Patterns**
