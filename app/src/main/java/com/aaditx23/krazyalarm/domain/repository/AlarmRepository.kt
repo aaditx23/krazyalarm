@@ -13,15 +13,4 @@ interface AlarmRepository {
     suspend fun getAlarm(id: Long): Alarm?
     suspend fun toggleAlarm(id: Long, enabled: Boolean): Result<Unit>
     suspend fun getEnabledAlarms(): List<Alarm>
-    suspend fun checkDuplicateAlarm(
-        hour: Int,
-        minute: Int,
-        days: Int,
-        scheduledDate: Long?,
-        label: String?,
-        ringtoneUri: String?,
-        flashPatternId: String?,
-        vibrationPatternId: String?,
-        excludeId: Long? = null
-    ): Boolean
 }

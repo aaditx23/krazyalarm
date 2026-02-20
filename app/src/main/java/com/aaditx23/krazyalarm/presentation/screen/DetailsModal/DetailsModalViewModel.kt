@@ -9,7 +9,6 @@ import com.aaditx23.krazyalarm.domain.models.FlashPattern
 import com.aaditx23.krazyalarm.domain.models.VibrationIntensity
 import com.aaditx23.krazyalarm.domain.models.VibrationPattern
 import com.aaditx23.krazyalarm.domain.repository.SettingsRepository
-import com.aaditx23.krazyalarm.domain.usecase.CheckDuplicateAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.CreateAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
@@ -26,7 +25,6 @@ class DetailsModalViewModel(
     private val createAlarmUseCase: CreateAlarmUseCase,
     private val updateAlarmUseCase: UpdateAlarmUseCase,
     private val deleteAlarmUseCase: DeleteAlarmUseCase,
-    private val checkDuplicateAlarmUseCase: CheckDuplicateAlarmUseCase,
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
@@ -105,22 +103,19 @@ class DetailsModalViewModel(
     }
 
     fun updateHour(hour: Int) {
-        android.util.Log.d("DetailsModalViewModel", "updateHour: $hour, clearing duplicateError")
-        _editState.value = _editState.value.copy(hour = hour, duplicateError = null)
+        _editState.value = _editState.value.copy(hour = hour)
     }
 
     fun updateMinute(minute: Int) {
-        android.util.Log.d("DetailsModalViewModel", "updateMinute: $minute, clearing duplicateError")
-        _editState.value = _editState.value.copy(minute = minute, duplicateError = null)
+        _editState.value = _editState.value.copy(minute = minute)
     }
 
     fun updateDays(days: Int) {
-        android.util.Log.d("DetailsModalViewModel", "updateDays: $days, clearing duplicateError and scheduledDate=${if (days != 0) null else _editState.value.scheduledDate}")
+        android.util.Log.d("DetailsModalViewModel", "updateDays: $days, scheduledDate=${if (days != 0) null else _editState.value.scheduledDate}")
         _editState.value = _editState.value.copy(
             days = days,
             // Clear scheduled date when selecting recurring days
-            scheduledDate = if (days != 0) null else _editState.value.scheduledDate,
-            duplicateError = null
+            scheduledDate = if (days != 0) null else _editState.value.scheduledDate
         )
     }
 
@@ -129,15 +124,15 @@ class DetailsModalViewModel(
     }
 
     fun updateLabel(label: String) {
-        _editState.value = _editState.value.copy(label = label, duplicateError = null)
+        _editState.value = _editState.value.copy(label = label)
     }
 
     fun updateFlashPattern(flashPattern: FlashPattern) {
-        _editState.value = _editState.value.copy(flashPattern = flashPattern, duplicateError = null)
+        _editState.value = _editState.value.copy(flashPattern = flashPattern)
     }
 
     fun updateVibrationPattern(vibrationPattern: VibrationPattern) {
-        _editState.value = _editState.value.copy(vibrationPattern = vibrationPattern, duplicateError = null)
+        _editState.value = _editState.value.copy(vibrationPattern = vibrationPattern)
     }
 
     fun updateVibrationIntensity(vibrationIntensity: VibrationIntensity) {
@@ -149,7 +144,7 @@ class DetailsModalViewModel(
     }
 
     fun updateRingtoneUri(ringtoneUri: String?) {
-        _editState.value = _editState.value.copy(ringtoneUri = ringtoneUri, duplicateError = null)
+        _editState.value = _editState.value.copy(ringtoneUri = ringtoneUri)
     }
 
     fun updateRingtoneName(ringtoneName: String) {
@@ -202,8 +197,8 @@ class DetailsModalViewModel(
     }
 
     fun updateScheduledDate(dateMillis: Long?) {
-        android.util.Log.d("DetailsModalViewModel", "updateScheduledDate: $dateMillis, clearing duplicateError")
-        _editState.value = _editState.value.copy(scheduledDate = dateMillis, duplicateError = null)
+        android.util.Log.d("DetailsModalViewModel", "updateScheduledDate: $dateMillis")
+        _editState.value = _editState.value.copy(scheduledDate = dateMillis)
     }
 
     fun saveAlarm() {
@@ -213,34 +208,12 @@ class DetailsModalViewModel(
             android.util.Log.d("DetailsModalViewModel", "isEditMode = ${_editState.value.isEditMode}")
 
             // Set saving state
-            _editState.value = _editState.value.copy(isSaving = true, duplicateError = null)
+            _editState.value = _editState.value.copy(isSaving = true)
 
             val state = _editState.value
 
             android.util.Log.d("DetailsModalViewModel", "saveAlarm: hour=${state.hour}, minute=${state.minute}, days=${state.days}, scheduledDate=${state.scheduledDate}, editingAlarmId=$editingAlarmId")
 
-            // Check for duplicate alarm using use case - now includes all properties
-            val isDuplicate = checkDuplicateAlarmUseCase(
-                hour = state.hour,
-                minute = state.minute,
-                days = state.days,
-                scheduledDate = state.scheduledDate,
-                label = state.label.ifBlank { null },
-                ringtoneUri = state.ringtoneUri,
-                flashPatternId = state.flashPattern.id,
-                vibrationPatternId = state.vibrationPattern.id,
-                excludeId = editingAlarmId
-            )
-
-            android.util.Log.d("DetailsModalViewModel", "isDuplicate=$isDuplicate")
-
-            if (isDuplicate) {
-                _editState.value = _editState.value.copy(
-                    isSaving = false,
-                    duplicateError = "An identical alarm already exists"
-                )
-                return@launch
-            }
 
             val alarmInput = AlarmInput(
                 hour = state.hour,
