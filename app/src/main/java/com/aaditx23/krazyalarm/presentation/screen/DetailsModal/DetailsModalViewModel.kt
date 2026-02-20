@@ -129,15 +129,15 @@ class DetailsModalViewModel(
     }
 
     fun updateLabel(label: String) {
-        _editState.value = _editState.value.copy(label = label)
+        _editState.value = _editState.value.copy(label = label, duplicateError = null)
     }
 
     fun updateFlashPattern(flashPattern: FlashPattern) {
-        _editState.value = _editState.value.copy(flashPattern = flashPattern)
+        _editState.value = _editState.value.copy(flashPattern = flashPattern, duplicateError = null)
     }
 
     fun updateVibrationPattern(vibrationPattern: VibrationPattern) {
-        _editState.value = _editState.value.copy(vibrationPattern = vibrationPattern)
+        _editState.value = _editState.value.copy(vibrationPattern = vibrationPattern, duplicateError = null)
     }
 
     fun updateVibrationIntensity(vibrationIntensity: VibrationIntensity) {
@@ -149,7 +149,7 @@ class DetailsModalViewModel(
     }
 
     fun updateRingtoneUri(ringtoneUri: String?) {
-        _editState.value = _editState.value.copy(ringtoneUri = ringtoneUri)
+        _editState.value = _editState.value.copy(ringtoneUri = ringtoneUri, duplicateError = null)
     }
 
     fun updateRingtoneName(ringtoneName: String) {
@@ -208,6 +208,10 @@ class DetailsModalViewModel(
 
     fun saveAlarm() {
         viewModelScope.launch {
+            android.util.Log.d("DetailsModalViewModel", "=== SAVE ALARM STARTED ===")
+            android.util.Log.d("DetailsModalViewModel", "editingAlarmId = $editingAlarmId")
+            android.util.Log.d("DetailsModalViewModel", "isEditMode = ${_editState.value.isEditMode}")
+
             // Set saving state
             _editState.value = _editState.value.copy(isSaving = true, duplicateError = null)
 

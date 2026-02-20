@@ -33,7 +33,7 @@ fun DaySelectorSection(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        val dayNames = listOf("M", "T", "W", "T", "F", "S", "S")
+        val dayNames = listOf("S", "M", "T", "W", "T", "F", "S") // Sun, Mon, Tue, Wed, Thu, Fri, Sat
         dayNames.forEachIndexed { index, dayName ->
             val dayBit = 1 shl index
             val isSelected = (selectedDays and dayBit) != 0

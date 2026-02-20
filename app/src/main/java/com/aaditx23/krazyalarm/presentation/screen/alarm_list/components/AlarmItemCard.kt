@@ -128,7 +128,7 @@ fun AlarmItemCard(
 }
 
 private fun getDaysOfWeekText(days: Int): String {
-    val dayNames = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    val dayNames = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
     val selectedIndices = mutableListOf<Int>()
 
     for (i in 0..6) {

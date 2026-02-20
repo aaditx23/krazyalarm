@@ -17,25 +17,38 @@ class AlarmRepositoryImpl(
 
     override suspend fun createAlarm(input: AlarmInput): Result<Long> {
         return try {
+            android.util.Log.d("AlarmRepository", "=== CREATE ALARM called ===")
+            android.util.Log.d("AlarmRepository", "Input: hour=${input.hour}, minute=${input.minute}, days=${input.days}, scheduledDate=${input.scheduledDate}")
             val entity = input.toEntity()
+            android.util.Log.d("AlarmRepository", "Entity created with ID: ${entity.id}")
             val id = alarmDao.insert(entity)
+            android.util.Log.d("AlarmRepository", "Inserted with ID: $id")
             Result.success(id)
         } catch (e: Exception) {
+            android.util.Log.e("AlarmRepository", "Create alarm failed", e)
             Result.failure(e)
         }
     }
 
     override suspend fun updateAlarm(id: Long, input: AlarmInput): Result<Unit> {
         return try {
+            android.util.Log.d("AlarmRepository", "=== UPDATE ALARM called ===")
+            android.util.Log.d("AlarmRepository", "Updating alarm ID: $id")
+            android.util.Log.d("AlarmRepository", "Input: hour=${input.hour}, minute=${input.minute}, days=${input.days}, scheduledDate=${input.scheduledDate}")
             val existing = alarmDao.getAlarmById(id)
             if (existing != null) {
+                android.util.Log.d("AlarmRepository", "Existing alarm found: ID=${existing.id}")
                 val updatedEntity = input.toEntity(id = id, createdAt = existing.createdAt)
+                android.util.Log.d("AlarmRepository", "Updated entity: ID=${updatedEntity.id}")
                 alarmDao.update(updatedEntity)
+                android.util.Log.d("AlarmRepository", "Update successful")
                 Result.success(Unit)
             } else {
+                android.util.Log.e("AlarmRepository", "Alarm with id $id not found")
                 Result.failure(IllegalArgumentException("Alarm with id $id not found"))
             }
         } catch (e: Exception) {
+            android.util.Log.e("AlarmRepository", "Update alarm failed", e)
             Result.failure(e)
         }
     }
