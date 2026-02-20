@@ -40,6 +40,11 @@ fun ButtonMotionSpeedCard(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
+                        text = "Make dismiss/snooze buttons move around the screen",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
                         text = if (speed == 0) "Disabled" else "Level $speed",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant

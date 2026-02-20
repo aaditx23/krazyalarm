@@ -53,13 +53,14 @@ fun AlarmTimeDisplay(
             Text(
                 text = "Scheduled for: ",
                 color = Color.White.copy(alpha = 0.6f),
+                fontWeight = FontWeight.W700,
                 style = MaterialTheme.typography.bodyLarge,
                 fontSize = 15.sp
             )
             Text(
                 text = scheduledTime,
-                color = Color(0xFFFFD700), // Gold color
                 style = MaterialTheme.typography.bodyLarge,
+                color = Color.White,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp
             )
@@ -73,14 +74,15 @@ fun AlarmTimeDisplay(
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Triggered at: ",
+                text = "Started at: ",
                 color = Color.White.copy(alpha = 0.6f),
+                fontWeight = FontWeight.W700,
                 style = MaterialTheme.typography.bodyLarge,
                 fontSize = 15.sp
             )
             Text(
                 text = alarmStartTime,
-                color = Color(0xFF4ECDC4), // Cyan/turquoise color
+                color = Color.White, // Cyan/turquoise color
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 16.sp
