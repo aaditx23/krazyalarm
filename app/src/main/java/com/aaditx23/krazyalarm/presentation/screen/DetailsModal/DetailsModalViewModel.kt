@@ -213,12 +213,16 @@ class DetailsModalViewModel(
 
             android.util.Log.d("DetailsModalViewModel", "saveAlarm: hour=${state.hour}, minute=${state.minute}, days=${state.days}, scheduledDate=${state.scheduledDate}, editingAlarmId=$editingAlarmId")
 
-            // Check for duplicate alarm using use case
+            // Check for duplicate alarm using use case - now includes all properties
             val isDuplicate = checkDuplicateAlarmUseCase(
                 hour = state.hour,
                 minute = state.minute,
                 days = state.days,
                 scheduledDate = state.scheduledDate,
+                label = state.label.ifBlank { null },
+                ringtoneUri = state.ringtoneUri,
+                flashPatternId = state.flashPattern.id,
+                vibrationPatternId = state.vibrationPattern.id,
                 excludeId = editingAlarmId
             )
 
@@ -227,7 +231,7 @@ class DetailsModalViewModel(
             if (isDuplicate) {
                 _editState.value = _editState.value.copy(
                     isSaving = false,
-                    duplicateError = "An alarm with the same time and date already exists"
+                    duplicateError = "An identical alarm already exists"
                 )
                 return@launch
             }
@@ -249,17 +253,21 @@ class DetailsModalViewModel(
 
             try {
                 val result = if (editingAlarmId != null) {
+                    android.util.Log.d("DetailsModalViewModel", "Calling UPDATE for alarm ID: $editingAlarmId")
                     updateAlarmUseCase(editingAlarmId!!, alarmInput)
                 } else {
+                    android.util.Log.d("DetailsModalViewModel", "Calling CREATE for new alarm")
                     createAlarmUseCase(alarmInput)
                 }
 
                 if (result.isSuccess) {
-                    _editState.value = _editState.value.copy(isSaving = false)
                     val alarm = result.getOrThrow()
+                    android.util.Log.d("DetailsModalViewModel", "Save successful - alarm ID: ${alarm.id}, was editing: $editingAlarmId")
+                    _editState.value = _editState.value.copy(isSaving = false)
                     val message = formatAlarmScheduleMessage(alarm)
                     _editEvents.value = AlarmEditEvent.SaveSuccessWithMessage(message)
                 } else {
+                    android.util.Log.e("DetailsModalViewModel", "Save failed: ${result.exceptionOrNull()?.message}")
                     _editState.value = _editState.value.copy(isSaving = false)
                     _editEvents.value = AlarmEditEvent.SaveError(result.exceptionOrNull()?.message ?: "Unknown error")
                 }
@@ -376,12 +384,5 @@ class DetailsModalViewModel(
             calendar.add(java.util.Calendar.DAY_OF_YEAR, 7)
             return calendar.timeInMillis
         }
-    }
-
-    fun reset() {
-        android.util.Log.d("DetailsModalViewModel", "=== RESET called - clearing all state ===")
-        editingAlarmId = null
-        _editState.value = DetailsModalState()
-        _editEvents.value = null
     }
 }

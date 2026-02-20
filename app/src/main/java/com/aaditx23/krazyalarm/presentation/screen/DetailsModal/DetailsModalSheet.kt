@@ -52,14 +52,18 @@ fun DetailsModalSheet(
     var showDatePicker by remember { mutableStateOf(false) }
 
     // Initialize viewmodel based on mode when modal opens
-    LaunchedEffect(editingAlarmId) {
-        android.util.Log.d("DetailsModalSheet", "=== Modal opened with editingAlarmId: $editingAlarmId ===")
-        if (editingAlarmId != null) {
-            // Edit mode
-            viewModel.startEditAlarm(editingAlarmId)
-        } else {
-            // Create mode
-            viewModel.startCreateAlarm()
+    LaunchedEffect(sheetState.isVisible, editingAlarmId) {
+        if (sheetState.isVisible) {
+            android.util.Log.d("DetailsModalSheet", "=== Modal opened with editingAlarmId: $editingAlarmId ===")
+            if (editingAlarmId != null) {
+                // Edit mode
+                android.util.Log.d("DetailsModalSheet", "Starting EDIT mode for alarm ID: $editingAlarmId")
+                viewModel.startEditAlarm(editingAlarmId)
+            } else {
+                // Create mode
+                android.util.Log.d("DetailsModalSheet", "Starting CREATE mode")
+                viewModel.startCreateAlarm()
+            }
         }
     }
 
@@ -184,17 +188,6 @@ fun DetailsModalSheet(
             }
         ) {
             DatePicker(state = datePickerState)
-        }
-    }
-
-    // Auto-expand sheet when visible
-    LaunchedEffect(sheetState.isVisible) {
-        if (sheetState.isVisible) {
-            sheetState.expand()
-        } else {
-            // Reset viewmodel when sheet is dismissed
-            android.util.Log.d("DetailsModalSheet", "=== Modal dismissed, resetting viewmodel ===")
-            viewModel.reset()
         }
     }
 }

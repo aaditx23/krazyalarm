@@ -10,8 +10,22 @@ class CheckDuplicateAlarmUseCase(
         minute: Int,
         days: Int,
         scheduledDate: Long?,
+        label: String?,
+        ringtoneUri: String?,
+        flashPatternId: String?,
+        vibrationPatternId: String?,
         excludeId: Long? = null
     ): Boolean {
-        return alarmRepository.checkDuplicateAlarm(hour, minute, days, scheduledDate, excludeId)
+        return alarmRepository.checkDuplicateAlarm(
+            hour,
+            minute,
+            days,
+            scheduledDate,
+            label,
+            ringtoneUri,
+            flashPatternId,
+            vibrationPatternId,
+            excludeId
+        )
     }
 }
