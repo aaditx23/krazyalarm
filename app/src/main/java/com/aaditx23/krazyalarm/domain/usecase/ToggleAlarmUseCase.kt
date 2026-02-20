@@ -1,56 +1,48 @@
 package com.aaditx23.krazyalarm.domain.usecase
 
+import android.util.Log
 import com.aaditx23.krazyalarm.domain.repository.AlarmRepository
 import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
-import java.util.Calendar
+import com.aaditx23.krazyalarm.domain.util.AlarmTimeCalculator
 
 class ToggleAlarmUseCase(
     private val alarmRepository: AlarmRepository,
     private val alarmScheduler: AlarmScheduler
 ) {
+    private companion object {
+        const val TAG = "ToggleAlarmUseCase"
+    }
+
     suspend operator fun invoke(id: Long, enabled: Boolean): Result<Unit> {
         return try {
             if (enabled) {
-                // Get the alarm before enabling
                 val alarm = alarmRepository.getAlarm(id)
                 if (alarm != null && alarm.days == 0) {
-                    // One-time alarm: update scheduledDate to today/tomorrow
-                    val calendar = Calendar.getInstance()
-                    calendar.set(Calendar.HOUR_OF_DAY, alarm.hour)
-                    calendar.set(Calendar.MINUTE, alarm.minute)
-                    calendar.set(Calendar.SECOND, 0)
-                    calendar.set(Calendar.MILLISECOND, 0)
+                    // One-time alarm: always recalculate scheduledDate to the next valid future time
+                    val nextTrigger = AlarmTimeCalculator.getNextOneTimeTrigger(alarm.hour, alarm.minute)
 
-                    // If the time has already passed today, schedule for tomorrow
-                    if (calendar.timeInMillis <= System.currentTimeMillis()) {
-                        calendar.add(Calendar.DAY_OF_YEAR, 1)
-                    }
+                    Log.d(TAG, "Re-enabling one-time alarm ID: ${alarm.id}, hour=${alarm.hour}, minute=${alarm.minute}")
+                    Log.d(TAG, "Old scheduledDate: ${alarm.scheduledDate}, new scheduledDate: $nextTrigger")
 
-                    // Update the alarm with new scheduled date
                     val updatedAlarm = alarm.copy(
-                        scheduledDate = calendar.timeInMillis,
+                        scheduledDate = nextTrigger,
                         enabled = true
                     )
                     alarmRepository.updateAlarmDirect(updatedAlarm)
-
-                    // Schedule the updated alarm
                     alarmScheduler.scheduleAlarm(updatedAlarm)
-                } else {
-                    // Repeating alarm or null alarm - just toggle
-                    val result = alarmRepository.toggleAlarm(id, true)
-
-                    if (result.isSuccess && alarm != null) {
-                        alarmScheduler.scheduleAlarm(alarm)
-                    }
+                } else if (alarm != null) {
+                    // Repeating alarm - just toggle and schedule
+                    alarmRepository.toggleAlarm(id, true)
+                    alarmScheduler.scheduleAlarm(alarm.copy(enabled = true))
                 }
             } else {
-                // Disabling alarm - cancel it
                 alarmRepository.toggleAlarm(id, false)
                 alarmScheduler.cancelAlarm(id)
             }
 
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "Error toggling alarm $id", e)
             Result.failure(e)
         }
     }

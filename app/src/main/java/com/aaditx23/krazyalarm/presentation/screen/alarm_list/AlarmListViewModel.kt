@@ -7,6 +7,7 @@ import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmsUseCase
 import com.aaditx23.krazyalarm.domain.usecase.ToggleAlarmUseCase
+import com.aaditx23.krazyalarm.domain.util.AlarmTimeCalculator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -141,9 +142,7 @@ class AlarmListViewModel(
 
     private fun formatAlarmScheduleMessage(alarm: com.aaditx23.krazyalarm.domain.models.Alarm): String {
         val now = System.currentTimeMillis()
-
-        // Calculate the actual trigger time using the same logic as AlarmScheduler
-        val triggerTime = calculateTriggerTime(alarm)
+        val triggerTime = AlarmTimeCalculator.getNextTriggerTime(alarm)
         val diffMillis = triggerTime - now
 
         // Round up to next minute if there are remaining seconds
@@ -182,50 +181,6 @@ class AlarmListViewModel(
                 val dateFormat = java.text.SimpleDateFormat("MMM dd, yyyy 'at' HH:mm", java.util.Locale.getDefault())
                 "Alarm scheduled for ${dateFormat.format(triggerTime)}"
             }
-        }
-    }
-
-    private fun calculateTriggerTime(alarm: com.aaditx23.krazyalarm.domain.models.Alarm): Long {
-        val calendar = java.util.Calendar.getInstance()
-
-        if (alarm.days == 0) {
-            // One time alarm
-            if (alarm.scheduledDate != null) {
-                // Use the scheduled date if it's set
-                calendar.timeInMillis = alarm.scheduledDate
-                calendar.set(java.util.Calendar.HOUR_OF_DAY, alarm.hour)
-                calendar.set(java.util.Calendar.MINUTE, alarm.minute)
-                calendar.set(java.util.Calendar.SECOND, 0)
-                calendar.set(java.util.Calendar.MILLISECOND, 0)
-                return calendar.timeInMillis
-            } else {
-                // No scheduled date, use today's time or tomorrow if already passed
-                calendar.set(java.util.Calendar.HOUR_OF_DAY, alarm.hour)
-                calendar.set(java.util.Calendar.MINUTE, alarm.minute)
-                calendar.set(java.util.Calendar.SECOND, 0)
-                calendar.set(java.util.Calendar.MILLISECOND, 0)
-                if (calendar.timeInMillis <= System.currentTimeMillis()) {
-                    calendar.add(java.util.Calendar.DAY_OF_YEAR, 1)
-                }
-                return calendar.timeInMillis
-            }
-        } else {
-            // Repeating alarm on specific days
-            calendar.set(java.util.Calendar.HOUR_OF_DAY, alarm.hour)
-            calendar.set(java.util.Calendar.MINUTE, alarm.minute)
-            calendar.set(java.util.Calendar.SECOND, 0)
-            calendar.set(java.util.Calendar.MILLISECOND, 0)
-
-            val currentDayOfWeek = calendar.get(java.util.Calendar.DAY_OF_WEEK)
-            for (i in 0..6) {
-                val checkDay = ((currentDayOfWeek - 1 + i) % 7) + 1
-                if ((alarm.days and (1 shl (checkDay - 1))) != 0) {
-                    calendar.add(java.util.Calendar.DAY_OF_YEAR, i)
-                    return calendar.timeInMillis
-                }
-            }
-            calendar.add(java.util.Calendar.DAY_OF_YEAR, 7)
-            return calendar.timeInMillis
         }
     }
 }
