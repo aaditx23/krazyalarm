@@ -23,17 +23,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.util.Calendar
 
@@ -47,23 +50,37 @@ fun DetailsModalSheet(
     viewModel: DetailsModalViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val editState by viewModel.editState.collectAsState()
     val editEvents by viewModel.editEvents.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Initialize viewmodel based on mode when modal opens
-    LaunchedEffect(sheetState.isVisible, editingAlarmId) {
-        if (sheetState.isVisible) {
-            android.util.Log.d("DetailsModalSheet", "=== Modal opened with editingAlarmId: $editingAlarmId ===")
-            if (editingAlarmId != null) {
-                // Edit mode
-                android.util.Log.d("DetailsModalSheet", "Starting EDIT mode for alarm ID: $editingAlarmId")
-                viewModel.startEditAlarm(editingAlarmId)
-            } else {
-                // Create mode
-                android.util.Log.d("DetailsModalSheet", "Starting CREATE mode")
-                viewModel.startCreateAlarm()
-            }
+    // Function to dismiss with animation
+    // The sheet animates out smoothly while the composable leaves composition quickly
+    // This prevents touch blocking and makes the UI feel more responsive
+    val dismissWithAnimation: () -> Unit = {
+        coroutineScope.launch {
+            sheetState.hide()
+        }
+        onDismiss()
+    }
+
+    // Initialize viewmodel when editingAlarmId changes
+    // DisposableEffect runs synchronously during composition (before rendering)
+    // This prevents showing stale content from previous modal
+    DisposableEffect(editingAlarmId) {
+        android.util.Log.d("DetailsModalSheet", "=== Initializing modal with editingAlarmId: $editingAlarmId ===")
+        if (editingAlarmId != null) {
+            android.util.Log.d("DetailsModalSheet", "Starting EDIT mode for alarm ID: $editingAlarmId")
+            viewModel.startEditAlarm(editingAlarmId)
+        } else {
+            android.util.Log.d("DetailsModalSheet", "Starting CREATE mode")
+            viewModel.startCreateAlarm()
+        }
+
+        onDispose {
+            // Cleanup if needed when editingAlarmId changes
+            android.util.Log.d("DetailsModalSheet", "=== Disposing previous modal state ===")
         }
     }
 
@@ -106,6 +123,7 @@ fun DetailsModalSheet(
                 is AlarmEditEvent.SaveSuccess,
                 is AlarmEditEvent.SaveSuccessWithTime,
                 is AlarmEditEvent.SaveSuccessWithMessage -> {
+                    sheetState.hide()
                     onAlarmSaved()
                     viewModel.consumeEditEvent()
                 }
@@ -117,7 +135,7 @@ fun DetailsModalSheet(
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = dismissWithAnimation,
         sheetState = sheetState,
         dragHandle = {
             Row(
@@ -139,7 +157,7 @@ fun DetailsModalSheet(
     ) {
         DetailsModalContent(
             viewModel = viewModel,
-            onDismiss = onDismiss,
+            onDismiss = dismissWithAnimation,
             onSoundClick = {
                 val intent = Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER).apply {
                     putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_ALARM)

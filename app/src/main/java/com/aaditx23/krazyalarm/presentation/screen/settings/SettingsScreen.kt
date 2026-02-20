@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.AlarmOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -113,7 +114,7 @@ fun SettingsScreen(
                 ) {
                     Column {
                         Text(
-                            text = "Test Alarm Screen",
+                            text = "Preview Alarm Screen",
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
@@ -123,7 +124,7 @@ fun SettingsScreen(
                         )
                     }
                     Icon(
-                        imageVector = Icons.Default.AlarmOff,
+                        imageVector = Icons.Default.Alarm,
                         contentDescription = "Test",
                         tint = MaterialTheme.colorScheme.primary
                     )
