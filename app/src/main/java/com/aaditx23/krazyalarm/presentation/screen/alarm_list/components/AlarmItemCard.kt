@@ -69,8 +69,10 @@ fun AlarmItemCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
-                        // Show scheduled date or days of week
-                        val displayText = if (alarm.scheduledDate != null) {
+                        // Show "Not Scheduled" when disabled, otherwise show date/days
+                        val displayText = if (!alarm.enabled) {
+                            "Not Scheduled"
+                        } else if (alarm.scheduledDate != null) {
                             val dateFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault())
                             "Scheduled for ${dateFormat.format(alarm.scheduledDate)}"
                         } else {

@@ -18,8 +18,13 @@ class ToggleAlarmUseCase(
             if (enabled) {
                 val alarm = alarmRepository.getAlarm(id)
                 if (alarm != null && alarm.days == 0) {
-                    // One-time alarm: always recalculate scheduledDate to the next valid future time
-                    val nextTrigger = AlarmTimeCalculator.getNextOneTimeTrigger(alarm.hour, alarm.minute)
+                    // One-time alarm: preserve the original scheduledDate if it is still in the
+                    // future; only recalculate if it has already passed.
+                    val nextTrigger = AlarmTimeCalculator.getNextOneTimeTrigger(
+                        alarm.hour,
+                        alarm.minute,
+                        alarm.scheduledDate // keeps the date when it's still in the future
+                    )
 
                     Log.d(TAG, "Re-enabling one-time alarm ID: ${alarm.id}, hour=${alarm.hour}, minute=${alarm.minute}")
                     Log.d(TAG, "Old scheduledDate: ${alarm.scheduledDate}, new scheduledDate: $nextTrigger")
