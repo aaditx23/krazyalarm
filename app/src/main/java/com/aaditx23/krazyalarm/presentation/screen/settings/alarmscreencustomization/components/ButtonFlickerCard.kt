@@ -1,4 +1,4 @@
-package com.aaditx23.krazyalarm.presentation.screen.settings.components
+package com.aaditx23.krazyalarm.presentation.screen.settings.alarmscreencustomization.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -10,13 +10,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-// Dropdown options: label → interval in ms (0 = disabled)
 private val FLICKER_OPTIONS = listOf(
-    "Disabled"    to 0,
-    "Very Slow (3s)"  to 3000,
-    "Slow (2s)"       to 2000,
-    "Medium (1s)"     to 1000,
-    "Fast (500ms)"    to 500,
+    "Disabled"          to 0,
+    "Very Slow (3s)"    to 3000,
+    "Slow (2s)"         to 2000,
+    "Medium (1s)"       to 1000,
+    "Fast (500ms)"      to 500,
     "Very Fast (250ms)" to 250
 )
 
@@ -96,5 +95,4 @@ fun ButtonFlickerCard(
         }
     }
 }
-
 

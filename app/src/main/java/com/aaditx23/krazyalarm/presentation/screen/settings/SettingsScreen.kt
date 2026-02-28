@@ -5,7 +5,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -22,12 +21,11 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLEDPatterns: () -> Unit = {},
     onNavigateToVibrationPatterns: () -> Unit = {},
-    onTestAlarm: () -> Unit = {}
+    onNavigateToAlarmScreenCustomization: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isSystemInDarkTheme = androidx.compose.foundation.isSystemInDarkTheme()
 
-    // Calculate actual dark mode state considering system theme
     val actualIsDarkMode = when (uiState.darkModeValue) {
         "dark" -> true
         "light" -> false
@@ -81,60 +79,22 @@ fun SettingsScreen(
                 onClick = onNavigateToVibrationPatterns
             )
 
+            // Alarm Screen Customization Card
+            AlarmScreenCustomizationCard(
+                onClick = onNavigateToAlarmScreenCustomization
+            )
+
             // Alarm Duration Card
             AlarmDurationCard(
                 durationMinutes = uiState.alarmDurationMinutes,
                 onDurationChange = { viewModel.updateAlarmDuration(it) }
             )
 
-            // Volume Slider (with overclock support up to 150%)
+            // Volume Slider
             VolumeCard(
                 volume = uiState.defaultVolume,
                 onVolumeChange = { viewModel.updateVolume(it) }
             )
-
-            // Button Motion Speed
-            ButtonMotionSpeedCard(
-                speed = uiState.buttonMotionSpeed,
-                onSpeedChange = { viewModel.updateButtonMotionSpeed(it) }
-            )
-
-            // Button Flicker
-            ButtonFlickerCard(
-                flickerIntervalMs = uiState.buttonFlickerIntervalMs,
-                onFlickerIntervalChange = { viewModel.updateButtonFlickerInterval(it) }
-            )
-
-            // Test Alarm Button
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = onTestAlarm
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Preview Alarm Screen",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Preview the alarm ringing screen",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Default.Alarm,
-                        contentDescription = "Test",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
         }
     }
 }

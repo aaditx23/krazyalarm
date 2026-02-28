@@ -11,6 +11,7 @@ import com.aaditx23.krazyalarm.presentation.screen.alarm_list.AlarmListScreen
 import com.aaditx23.krazyalarm.presentation.screen.alarm_ringing.AlarmRingingActivity
 import com.aaditx23.krazyalarm.presentation.screen.permissions.PermissionsScreen
 import com.aaditx23.krazyalarm.presentation.screen.settings.SettingsScreen
+import com.aaditx23.krazyalarm.presentation.screen.settings.alarmscreencustomization.AlarmScreenCustomizationScreen
 import com.aaditx23.krazyalarm.presentation.screen.settings.ledpatterns.LEDPatternsScreen
 import com.aaditx23.krazyalarm.presentation.screen.settings.vibrationpatterns.VibrationPatternsScreen
 
@@ -61,13 +62,8 @@ fun AppNavigation(
                 onNavigateToVibrationPatterns = {
                     navController.navigate(Screen.VibrationPatterns.route)
                 },
-                onTestAlarm = {
-                    // Start the AlarmRingingActivity for testing
-                    val intent = AlarmRingingActivity.createIntent(
-                        context = context,
-                        alarmId = -1L // -1 indicates a test alarm
-                    )
-                    context.startActivity(intent)
+                onNavigateToAlarmScreenCustomization = {
+                    navController.navigate(Screen.AlarmScreenCustomization.route)
                 }
             )
         }
@@ -84,6 +80,21 @@ fun AppNavigation(
             VibrationPatternsScreen(
                 onNavigateBack = {
                     navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.AlarmScreenCustomization.route) {
+            AlarmScreenCustomizationScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onTestAlarm = {
+                    val intent = AlarmRingingActivity.createIntent(
+                        context = context,
+                        alarmId = -1L
+                    )
+                    context.startActivity(intent)
                 }
             )
         }

@@ -1,4 +1,4 @@
-package com.aaditx23.krazyalarm.presentation.screen.settings.components
+package com.aaditx23.krazyalarm.presentation.screen.settings.alarmscreencustomization.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -54,36 +54,22 @@ fun ButtonMotionSpeedCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Slider with discrete steps
             Column {
                 Slider(
                     value = speed.toFloat(),
                     onValueChange = { onSpeedChange(it.toInt()) },
                     valueRange = 0f..8f,
-                    steps = 7, // 9 total values (0-8)
+                    steps = 7,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // Speed labels
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = "Off",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Slow",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "Fast",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("Off",  fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Slow", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Fast", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -99,3 +85,4 @@ fun ButtonMotionSpeedCard(
         }
     }
 }
+
