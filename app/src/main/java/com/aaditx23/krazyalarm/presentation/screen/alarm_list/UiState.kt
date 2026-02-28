@@ -10,5 +10,6 @@ data class UiState(
     val showDeleteDialog: Boolean = false,
     val isSelectMode: Boolean = false,
     val selectedAlarms: Set<Long> = emptySet(),
-    val editingAlarmId: Long? = null // null = create mode, non-null = edit mode
+    val editingAlarmId: Long? = null, // null = create mode, non-null = edit mode
+    val autoOpenTimePicker: Boolean = false
 )

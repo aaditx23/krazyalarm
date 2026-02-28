@@ -148,11 +148,11 @@ class AlarmListViewModel(
     }
 
     fun openCreateAlarmSheet() {
-        _uiState.value = _uiState.value.copy(showSheet = true, editingAlarmId = null)
+        _uiState.value = _uiState.value.copy(showSheet = true, editingAlarmId = null, autoOpenTimePicker = true)
     }
 
     fun openEditAlarmSheet(alarmId: Long) {
-        _uiState.value = _uiState.value.copy(showSheet = true, editingAlarmId = alarmId)
+        _uiState.value = _uiState.value.copy(showSheet = true, editingAlarmId = alarmId, autoOpenTimePicker = false)
     }
 
     fun showDeleteDialog(show: Boolean) {
@@ -169,6 +169,10 @@ class AlarmListViewModel(
 
     fun consumeUiEvent() {
         _uiEvents.value = null
+    }
+
+    fun consumeAutoOpenTimePicker() {
+        _uiState.value = _uiState.value.copy(autoOpenTimePicker = false)
     }
 
     private fun formatAlarmScheduleMessage(alarm: com.aaditx23.krazyalarm.domain.models.Alarm): String {

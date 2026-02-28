@@ -25,7 +25,6 @@ import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.Flash
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.ScheduleAlarmButton
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.SoundCard
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimeDisplaySection
-import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimePickerDialog
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.UpcomingAlarmSection
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.VibrationPatternCard
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.VibrationPatternSelectionDialog
@@ -36,12 +35,12 @@ fun DetailsModalContent(
     onDismiss: () -> Unit,
     onSoundClick: () -> Unit,
     onScheduleClick: () -> Unit,
+    onTimeClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.editState.collectAsState()
     val events by viewModel.editEvents.collectAsState()
 
-    var showTimePicker by remember { mutableStateOf(false) }
     var showFlashPatternDialog by remember { mutableStateOf(false) }
     var showVibrationPatternDialog by remember { mutableStateOf(false) }
 
@@ -78,7 +77,7 @@ fun DetailsModalContent(
         TimeDisplaySection(
             hour = state.hour,
             minute = state.minute,
-            onTimeClick = { showTimePicker = true },
+            onTimeClick = onTimeClick,
             modifier = Modifier.padding(horizontal = 24.dp)
         )
 
@@ -171,16 +170,6 @@ fun DetailsModalContent(
         Spacer(modifier = Modifier.height(32.dp))
     }
 
-    // Time Picker Dialog
-    if (showTimePicker) {
-        TimePickerDialog(
-            initialHour = state.hour,
-            initialMinute = state.minute,
-            onHourChange = viewModel::updateHour,
-            onMinuteChange = viewModel::updateMinute,
-            onDismiss = { showTimePicker = false }
-        )
-    }
 
     // Flash Pattern Selection Dialog
     if (showFlashPatternDialog) {

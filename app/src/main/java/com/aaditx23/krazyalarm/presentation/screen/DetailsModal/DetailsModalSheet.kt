@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimePickerDialog
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.util.Calendar
@@ -44,7 +45,9 @@ import java.util.Calendar
 @Composable
 fun DetailsModalSheet(
     sheetState: SheetState,
-    editingAlarmId: Long? = null, // null = create mode, non-null = edit mode
+    editingAlarmId: Long? = null,
+    autoOpenTimePicker: Boolean = false,
+    onTimePickerConsumed: () -> Unit = {},
     onDismiss: () -> Unit,
     onAlarmSaved: () -> Unit,
     viewModel: DetailsModalViewModel = koinViewModel()
@@ -54,6 +57,15 @@ fun DetailsModalSheet(
     val editState by viewModel.editState.collectAsState()
     val editEvents by viewModel.editEvents.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    // Auto-open time picker when FAB creates a new alarm
+    LaunchedEffect(autoOpenTimePicker) {
+        if (autoOpenTimePicker) {
+            showTimePicker = true
+            onTimePickerConsumed()
+        }
+    }
 
     // Function to dismiss with animation // The sheet animates out smoothly while the composable leaves composition quickly
     // This prevents touch blocking and makes the UI feel more responsive
@@ -157,6 +169,7 @@ fun DetailsModalSheet(
         DetailsModalContent(
             viewModel = viewModel,
             onDismiss = dismissWithAnimation,
+            onTimeClick = { showTimePicker = true },
             onSoundClick = {
                 val intent = Intent(android.media.RingtoneManager.ACTION_RINGTONE_PICKER).apply {
                     putExtra(android.media.RingtoneManager.EXTRA_RINGTONE_TYPE, android.media.RingtoneManager.TYPE_ALARM)
@@ -168,6 +181,17 @@ fun DetailsModalSheet(
                 ringtonePickerLauncher.launch(intent)
             },
             onScheduleClick = { showDatePicker = true }
+        )
+    }
+
+    // Time Picker Dialog
+    if (showTimePicker) {
+        TimePickerDialog(
+            initialHour = editState.hour,
+            initialMinute = editState.minute,
+            onHourChange = viewModel::updateHour,
+            onMinuteChange = viewModel::updateMinute,
+            onDismiss = { showTimePicker = false }
         )
     }
 

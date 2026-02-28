@@ -197,6 +197,8 @@ fun AlarmListScreen(
         DetailsModalSheet(
             sheetState = sheetState,
             editingAlarmId = uiState.editingAlarmId,
+            autoOpenTimePicker = uiState.autoOpenTimePicker,
+            onTimePickerConsumed = { viewModel.consumeAutoOpenTimePicker() },
             onDismiss = {
                 viewModel.showSheet(false)
             },
