@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Snooze
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -77,75 +78,77 @@ fun FloatingActionButtons(
         }
     }
 
-    // Flicker state:
-    // dismissVisible == true  → dismiss visible, snooze invisible
-    // dismissVisible == false → snooze visible, dismiss invisible
-    // Start randomly so the two buttons don't always flicker the same way
-    var dismissVisible by remember(buttonFlickerIntervalMs) {
+    // Flicker state: one button is "active" (full alpha, enabled) at a time.
+    // The inactive button is faded to near-invisible AND disabled so ghost taps are impossible.
+    // Starting state is random so it differs every alarm fire.
+    var dismissActive by remember(buttonFlickerIntervalMs) {
         mutableStateOf(if (buttonFlickerIntervalMs > 0) kotlin.random.Random.nextBoolean() else true)
     }
-    var snoozeVisible by remember(buttonFlickerIntervalMs) {
-        mutableStateOf(if (buttonFlickerIntervalMs > 0) !dismissVisible else true)
+    var snoozeActive by remember(buttonFlickerIntervalMs) {
+        mutableStateOf(if (buttonFlickerIntervalMs > 0) !dismissActive else true)
     }
 
     LaunchedEffect(buttonFlickerIntervalMs) {
         if (buttonFlickerIntervalMs <= 0) {
-            // No flicker — both always visible
-            dismissVisible = true
-            snoozeVisible  = true
+            dismissActive = true
+            snoozeActive  = true
             return@LaunchedEffect
         }
         while (true) {
             delay(buttonFlickerIntervalMs.toLong())
-            // Alternate: whichever is visible goes invisible and vice-versa
-            val nextDismissVisible = !dismissVisible
-            snoozeVisible  = !nextDismissVisible
-            dismissVisible = nextDismissVisible
+            val next = !dismissActive
+            dismissActive = next
+            snoozeActive  = !next
         }
     }
+
+    val dismissAlpha = if (dismissActive) 1f else 0f
+    val snoozeAlpha  = if (snoozeActive)  1f else 0f
 
     tick.let {
         Box(modifier = modifier) {
             // Snooze button
-            if (snoozeVisible) {
-                Button(
-                    onClick = onSnooze,
-                    modifier = Modifier
-                        .width(140.dp)
-                        .height(48.dp)
-                        .offset(
-                            x = with(density) { snoozeBody.x.toDp() },
-                            y = with(density) { snoozeBody.y.toDp() }
-                        ),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
+            Button(
+                onClick = onSnooze,
+                enabled = snoozeActive,
+                modifier = Modifier
+                    .width(140.dp)
+                    .height(48.dp)
+                    .offset(
+                        x = with(density) { snoozeBody.x.toDp() },
+                        y = with(density) { snoozeBody.y.toDp() }
                     )
-                ) {
-                    Icon(Icons.Default.Snooze, null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("SNOOZE", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                }
+                    .alpha(snoozeAlpha),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    disabledContainerColor = MaterialTheme.colorScheme.secondary
+                )
+            ) {
+                Icon(Icons.Default.Snooze, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("SNOOZE", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
 
             // Dismiss button
-            if (dismissVisible) {
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier
-                        .width(140.dp)
-                        .height(48.dp)
-                        .offset(
-                            x = with(density) { dismissBody.x.toDp() },
-                            y = with(density) { dismissBody.y.toDp() }
-                        ),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
+            Button(
+                onClick = onDismiss,
+                enabled = dismissActive,
+                modifier = Modifier
+                    .width(140.dp)
+                    .height(48.dp)
+                    .offset(
+                        x = with(density) { dismissBody.x.toDp() },
+                        y = with(density) { dismissBody.y.toDp() }
                     )
-                ) {
-                    Icon(Icons.Default.AlarmOff, null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("DISMISS", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                }
+                    .alpha(dismissAlpha),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(Icons.Default.AlarmOff, null, Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("DISMISS", fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
