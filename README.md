@@ -22,16 +22,19 @@ Built with modern Android architecture, KrazyAlarm combines **powerful flash ale
 </div>
 
 <div align="center">
-  <img src="screenshots/05.png" width="200" alt="Sound Settings"/>
-  <img src="screenshots/06.png" width="200" alt="Flash Patterns"/>
-  <img src="screenshots/07.png" width="200" alt="Vibration Patterns"/>
-  <img src="screenshots/08.png" width="200" alt="Settings"/>
+  <img src="screenshots/05.0.png" width="200" alt="Settings"/>
+  <img src="screenshots/05.1.png" width="200" alt="Snooze Duration Dialog"/>
+  <img src="screenshots/05.2.png" width="200" alt="LED Flash Pattern Screen"/>
+  <img src="screenshots/05.3.png" width="200" alt="Vibration Pattern Screen"/>
+  <img src="screenshots/05.4.png" width="200" alt="Alarm Screen Customization"/>
 </div>
 
 ### 🎮 Moving Buttons Challenge
 
 <div align="center">
-  <img src="screenshots/09.mp4" width="400" alt="Alarm Screen with Moving Buttons"/>
+  <a href="screenshots/06.1.mp4">▶️ Alarm Screen - Moving Buttons</a>
+  &nbsp;&nbsp;
+  <a href="screenshots/06.2.mp4">▶️ Alarm Screen - Moving Buttons with Flicker</a>
 </div>
 
 *The alarm screen features moving dismiss/snooze buttons that bounce around the screen with physics-based collision detection, making it harder to accidentally dismiss your alarm while half-asleep!*
