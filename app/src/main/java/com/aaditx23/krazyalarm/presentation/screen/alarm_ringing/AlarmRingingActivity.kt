@@ -3,6 +3,7 @@ package com.aaditx23.krazyalarm.presentation.screen.alarm_ringing
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.PowerManager
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,6 +28,8 @@ class AlarmRingingActivity : ComponentActivity() {
         parametersOf(alarmId)
     }
 
+    private var wakeLock: PowerManager.WakeLock? = null
+
     companion object {
         private const val TAG = "AlarmRingingActivity"
         const val EXTRA_ALARM_ID = "alarm_id"
@@ -44,6 +47,22 @@ class AlarmRingingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Force screen on and show over lockscreen (no keyguard dismissal — that would prompt for password)
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
+
+        // Acquire a wakelock so the CPU + screen stay on while the alarm is ringing
+        val powerManager = getSystemService(PowerManager::class.java)
+        @Suppress("DEPRECATION", "WakelockTimeout")
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.FULL_WAKE_LOCK or
+            PowerManager.ACQUIRE_CAUSES_WAKEUP or
+            PowerManager.ON_AFTER_RELEASE,
+            "KrazyAlarm::AlarmWakeLock"
+        ).also { it.acquire(10 * 60 * 1000L /* 10 min max */) }
+
+        Log.d(TAG, "WakeLock acquired for alarm $alarmId")
+
         // Register for auto-dismiss callback from service
         AlarmRingingService.setOnAutoDismissListener { dismissedAlarmId ->
             if (dismissedAlarmId == alarmId) {
@@ -52,9 +71,6 @@ class AlarmRingingActivity : ComponentActivity() {
             }
         }
 
-        // Show activity when screen is locked
-        setShowWhenLocked(true)
-        setTurnScreenOn(true)
 
         setContent {
             val darkMode by settingsRepository.darkMode.collectAsState(initial = "system")
@@ -78,6 +94,14 @@ class AlarmRingingActivity : ComponentActivity() {
         super.onDestroy()
         // Clear the listener when activity is destroyed
         AlarmRingingService.setOnAutoDismissListener(null)
+        // Release wakelock if still held
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+                Log.d(TAG, "WakeLock released")
+            }
+        }
+        wakeLock = null
     }
 
     private fun handleDismiss() {

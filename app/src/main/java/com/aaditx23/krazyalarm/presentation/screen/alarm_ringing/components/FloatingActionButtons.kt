@@ -33,26 +33,36 @@ fun FloatingActionButtons(
     // Convert speed setting (0-8) to actual velocity
     val actualSpeed = buttonMotionSpeed.toFloat()
 
-    // Create physics bodies for both buttons
+    // Both buttons share the same initial Y so they are aligned when speed = 0
+    val buttonGap = with(density) { 16.dp.toPx() }
+    val totalButtonsWidth = buttonWidthPx * 2 + buttonGap
+    val startX = (screenWidthPx - totalButtonsWidth) / 2f
+    val sharedY = screenHeightPx - buttonHeightPx - with(density) { 120.dp.toPx() }
+
+    // Create physics bodies for both buttons.
+    // Horizontal direction is randomised independently; vertical directions are forced opposite
+    // so the buttons immediately diverge instead of drifting together.
     val dismissBody = remember(buttonMotionSpeed) {
+        val randomVx = if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed
         PhysicsBody(
-            x = 50f,
-            y = screenHeightPx - buttonHeightPx - 200f,
+            x = startX,
+            y = sharedY,
             width = buttonWidthPx,
             height = buttonHeightPx,
-            vx = if (buttonMotionSpeed > 0) (if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed) else 0f,
-            vy = if (buttonMotionSpeed > 0) (if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed) else 0f
+            vx = if (buttonMotionSpeed > 0) randomVx else 0f,
+            vy = if (buttonMotionSpeed > 0) -actualSpeed else 0f  // always starts going UP
         )
     }
 
     val snoozeBody = remember(buttonMotionSpeed) {
+        val randomVx = if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed
         PhysicsBody(
-            x = screenWidthPx - buttonWidthPx - 50f,
-            y = screenHeightPx - buttonHeightPx - 400f,
+            x = startX + buttonWidthPx + buttonGap,
+            y = sharedY,
             width = buttonWidthPx,
             height = buttonHeightPx,
-            vx = if (buttonMotionSpeed > 0) (if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed) else 0f,
-            vy = if (buttonMotionSpeed > 0) (if (kotlin.random.Random.nextBoolean()) actualSpeed else -actualSpeed) else 0f
+            vx = if (buttonMotionSpeed > 0) randomVx else 0f,
+            vy = if (buttonMotionSpeed > 0) actualSpeed else 0f   // always starts going DOWN
         )
     }
 

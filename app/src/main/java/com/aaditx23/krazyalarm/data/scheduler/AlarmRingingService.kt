@@ -16,6 +16,7 @@ import android.media.RingtoneManager
 import android.media.audiofx.LoudnessEnhancer
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -69,11 +70,23 @@ class AlarmRingingService : Service() {
     private var cameraManager: CameraManager? = null
     private var flashJob: Job? = null
     private var autoDismissJob: Job? = null
+    private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
         initializeHardware()
+
+        // Acquire wakelock so the screen turns on immediately when the alarm fires
+        val powerManager = getSystemService(PowerManager::class.java)
+        @Suppress("DEPRECATION", "WakelockTimeout")
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.FULL_WAKE_LOCK or
+            PowerManager.ACQUIRE_CAUSES_WAKEUP or
+            PowerManager.ON_AFTER_RELEASE,
+            "KrazyAlarm::ServiceWakeLock"
+        ).also { it.acquire(10 * 60 * 1000L /* 10 min max */) }
+        Log.d(TAG, "Service WakeLock acquired")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -594,6 +607,13 @@ class AlarmRingingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         stopAllAlarmComponents()
+        wakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+                Log.d(TAG, "Service WakeLock released")
+            }
+        }
+        wakeLock = null
         Log.d(TAG, "AlarmRingingService destroyed")
     }
 

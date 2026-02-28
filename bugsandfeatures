@@ -1,0 +1,6 @@
+bugs
+
+1. alarm screen - the buttons need to start from same vetical position. when i set their motion to be nothing, i see they are not aligned. but they should be.
+2. the alarm screen - when the alarm triggers, the alarm screen should pop up and block the screen, even if the screen is off it must light up the screen and show the alarm screen.
+3. alarm schedule logic
+-
