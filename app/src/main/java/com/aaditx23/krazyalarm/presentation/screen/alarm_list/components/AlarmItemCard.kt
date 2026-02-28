@@ -8,17 +8,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.domain.models.Alarm
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimePickerDialog
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -33,8 +41,13 @@ fun AlarmItemCard(
     onLongClick: () -> Unit,
     onSelect: () -> Unit,
     onDelete: () -> Unit,
+    onTimeChange: (hour: Int, minute: Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showTimePicker by remember { mutableStateOf(false) }
+    var pickerHour by remember(alarm.hour) { mutableIntStateOf(alarm.hour) }
+    var pickerMinute by remember(alarm.minute) { mutableIntStateOf(alarm.minute) }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -62,7 +75,6 @@ fun AlarmItemCard(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
-
                     Row(
                         modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
                         horizontalArrangement = Arrangement.Start,
@@ -97,24 +109,39 @@ fun AlarmItemCard(
                             )
                         }
                     }
-                    // Time
+
+                    // Time — clickable with rounded corners, opens time picker
                     val hour12 = if (alarm.hour == 0) 12 else if (alarm.hour > 12) alarm.hour - 12 else alarm.hour
                     val amPm = if (alarm.hour < 12) "AM" else "PM"
-                    Row(
-                        verticalAlignment = Alignment.Bottom
-                    ) {
-                        Text(
-                            text = String.format("%02d:%02d", hour12, alarm.minute),
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontWeight = FontWeight.Bold,
 
-                        )
-                        Text(
-                            text = amPm.lowercase(),
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Light,
-                            modifier = Modifier.padding(start = 8.dp, bottom = 2.dp)
-                        )
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surface.copy(alpha = 0f), // transparent
+                        onClick = {
+                            if (!isSelectMode) {
+                                pickerHour = alarm.hour
+                                pickerMinute = alarm.minute
+                                showTimePicker = true
+                            }
+                        }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = String.format("%02d:%02d", hour12, alarm.minute),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Bold,
+
+                            )
+                            Text(
+                                text = amPm.lowercase(),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Light,
+                                modifier = Modifier.padding(start = 8.dp, bottom = 2.dp)
+                            )
+                        }
                     }
                 }
 
@@ -122,10 +149,24 @@ fun AlarmItemCard(
                 Switch(
                     checked = alarm.enabled,
                     onCheckedChange = onToggle,
-
                 )
             }
         }
+    }
+
+    // Inline time picker dialog
+    if (showTimePicker) {
+        TimePickerDialog(
+            initialHour = pickerHour,
+            initialMinute = pickerMinute,
+            onHourChange = { pickerHour = it },
+            onMinuteChange = { pickerMinute = it },
+            onDismiss = { showTimePicker = false },
+            onConfirm = {
+                showTimePicker = false
+                onTimeChange(pickerHour, pickerMinute)
+            }
+        )
     }
 }
 

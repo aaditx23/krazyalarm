@@ -157,7 +157,10 @@ fun AlarmListScreen(
                                         viewModel.toggleAlarmSelection(alarm.id)
                                     }
                                 },
-                                onDelete = { viewModel.deleteAlarm(alarm.id) }
+                                onDelete = { viewModel.deleteAlarm(alarm.id) },
+                                onTimeChange = { hour, minute ->
+                                    viewModel.updateAlarmTime(alarm.id, hour, minute)
+                                }
                             )
                         }
                     }

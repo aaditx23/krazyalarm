@@ -3,10 +3,12 @@ package com.aaditx23.krazyalarm.presentation.screen.alarm_list
 import UiEvent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aaditx23.krazyalarm.domain.models.AlarmInput
 import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmsUseCase
 import com.aaditx23.krazyalarm.domain.usecase.ToggleAlarmUseCase
+import com.aaditx23.krazyalarm.domain.usecase.UpdateAlarmUseCase
 import com.aaditx23.krazyalarm.domain.util.AlarmTimeCalculator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +22,8 @@ class AlarmListViewModel(
     private val getAlarmsUseCase: GetAlarmsUseCase,
     private val toggleAlarmUseCase: ToggleAlarmUseCase,
     private val deleteAlarmUseCase: DeleteAlarmUseCase,
-    private val getAlarmByIdUseCase: GetAlarmByIdUseCase
+    private val getAlarmByIdUseCase: GetAlarmByIdUseCase,
+    private val updateAlarmUseCase: UpdateAlarmUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UiState(isLoading = true))
@@ -69,6 +72,34 @@ class AlarmListViewModel(
             deleteAlarmUseCase(alarmId)
                 .onFailure { exception ->
                     _uiEvents.value = UiEvent.Error("Failed to delete alarm: ${exception.message}")
+                }
+        }
+    }
+
+    fun updateAlarmTime(alarmId: Long, hour: Int, minute: Int) {
+        viewModelScope.launch {
+            val existing = getAlarmByIdUseCase(alarmId) ?: return@launch
+            val input = AlarmInput(
+                hour = hour,
+                minute = minute,
+                days = existing.days,
+                enabled = true,
+                label = existing.label,
+                ringtoneUri = existing.ringtoneUri,
+                flashPatternId = existing.flashPatternId,
+                vibrationPatternId = existing.vibrationPatternId,
+                vibrationIntensity = existing.vibrationIntensity,
+                snoozeDurationMinutes = existing.snoozeDurationMinutes,
+                alarmDurationMinutes = existing.alarmDurationMinutes,
+                scheduledDate = existing.scheduledDate
+            )
+            updateAlarmUseCase(alarmId, input)
+                .onSuccess { alarm ->
+                    val message = formatAlarmScheduleMessage(alarm)
+                    _uiEvents.value = UiEvent.Success(message)
+                }
+                .onFailure {
+                    _uiEvents.value = UiEvent.Error("Failed to update alarm time")
                 }
         }
     }

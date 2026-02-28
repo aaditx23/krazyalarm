@@ -43,7 +43,8 @@ fun TimePickerDialog(
     initialMinute: Int,
     onHourChange: (Int) -> Unit,
     onMinuteChange: (Int) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onConfirm: (() -> Unit)? = null
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -57,7 +58,7 @@ fun TimePickerDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = { onConfirm?.invoke() ?: onDismiss() }) {
                 Text("OK")
             }
         },
