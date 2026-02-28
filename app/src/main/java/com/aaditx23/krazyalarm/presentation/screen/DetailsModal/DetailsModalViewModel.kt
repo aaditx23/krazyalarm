@@ -13,7 +13,7 @@ import com.aaditx23.krazyalarm.domain.usecase.CreateAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
 import com.aaditx23.krazyalarm.domain.usecase.UpdateAlarmUseCase
-import com.aaditx23.krazyalarm.domain.util.AlarmTimeCalculator
+import com.aaditx23.krazyalarm.domain.util.AlarmScheduleFormatter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -275,45 +275,6 @@ class DetailsModalViewModel(
         _editEvents.value = null
     }
 
-    private fun formatAlarmScheduleMessage(alarm: Alarm): String {
-        val now = System.currentTimeMillis()
-        val triggerTime = AlarmTimeCalculator.getNextTriggerTime(alarm)
-        val diffMillis = triggerTime - now
-
-        val totalMinutes = kotlin.math.ceil(diffMillis / 60000.0).toLong()
-        val hours = totalMinutes / 60
-        val minutes = totalMinutes % 60
-
-        val triggerCalendar = java.util.Calendar.getInstance().apply {
-            timeInMillis = triggerTime
-        }
-        val todayCalendar = java.util.Calendar.getInstance()
-
-        val isSameDay = triggerCalendar.get(java.util.Calendar.YEAR) == todayCalendar.get(java.util.Calendar.YEAR) &&
-                triggerCalendar.get(java.util.Calendar.DAY_OF_YEAR) == todayCalendar.get(java.util.Calendar.DAY_OF_YEAR)
-
-        val tomorrowCalendar = java.util.Calendar.getInstance().apply {
-            add(java.util.Calendar.DAY_OF_YEAR, 1)
-        }
-        val isTomorrow = triggerCalendar.get(java.util.Calendar.YEAR) == tomorrowCalendar.get(java.util.Calendar.YEAR) &&
-                triggerCalendar.get(java.util.Calendar.DAY_OF_YEAR) == tomorrowCalendar.get(java.util.Calendar.DAY_OF_YEAR)
-
-        return when {
-            isSameDay -> {
-                if (hours > 0) {
-                    "Alarm scheduled in $hours hour${if (hours != 1L) "s" else ""} and $minutes minute${if (minutes != 1L) "s" else ""}"
-                } else {
-                    "Alarm scheduled in $minutes minute${if (minutes != 1L) "s" else ""}"
-                }
-            }
-            isTomorrow -> {
-                val timeStr = String.format("%02d:%02d", alarm.hour, alarm.minute)
-                "Alarm scheduled for tomorrow at $timeStr"
-            }
-            else -> {
-                val dateFormat = java.text.SimpleDateFormat("MMM dd, yyyy 'at' HH:mm", java.util.Locale.getDefault())
-                "Alarm scheduled for ${dateFormat.format(triggerTime)}"
-            }
-        }
-    }
+    private fun formatAlarmScheduleMessage(alarm: Alarm): String =
+        AlarmScheduleFormatter.snackbarMessage(alarm)
 }
