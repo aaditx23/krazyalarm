@@ -114,7 +114,7 @@ data class SettingsUiState(
     val darkModeValue: String = "system",
     val snoozeDuration: Int = 10,
     val defaultFlashPattern: String = "NONE",
-    val defaultVibrationPattern: String = "CONTINUOUS",
+    val defaultVibrationPattern: String = "PULSE",
     val defaultVibrationIntensity: String = "MEDIUM",
     val defaultVolume: Int = 100,
     val alarmDurationMinutes: Int = 1,

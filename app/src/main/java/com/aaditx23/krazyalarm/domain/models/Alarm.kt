@@ -79,10 +79,10 @@ sealed class VibrationPattern(val id: String, val displayName: String) {
                 "ESCALATING" -> Escalating
                 "HEARTBEAT" -> Heartbeat
                 "WAVE" -> Wave
-                else -> Continuous
+                else -> Pulse
             }
         }
 
-        fun getAll(): List<VibrationPattern> = listOf(Off, Continuous, Pulse, Escalating, Heartbeat, Wave)
+        fun getAll(): List<VibrationPattern> = listOf(Off, Pulse, Escalating, Heartbeat, Wave, Continuous)
     }
 }

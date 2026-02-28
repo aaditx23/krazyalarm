@@ -49,7 +49,7 @@ fun VibrationDurationDropdown(
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = "$selectedDuration second${if (selectedDuration > 1) "s" else ""}",
+                            text = "$selectedDuration sec",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

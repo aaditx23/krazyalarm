@@ -1,6 +1,7 @@
 package com.aaditx23.krazyalarm.presentation.screen.settings.alarmscreencustomization.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
@@ -66,6 +67,7 @@ fun ButtonFlickerCard(
                 onExpandedChange = { expanded = !expanded }
             ) {
                 OutlinedTextField(
+                    shape = RoundedCornerShape(12.dp),
                     value = selectedLabel,
                     onValueChange = {},
                     readOnly = true,

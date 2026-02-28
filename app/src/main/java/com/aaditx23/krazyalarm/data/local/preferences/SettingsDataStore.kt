@@ -69,7 +69,7 @@ class SettingsDataStore(private val context: Context) {
     // Default vibration pattern
     val defaultVibrationPattern: Flow<String> = context.dataStore.data
         .map { preferences ->
-            preferences[KEY_DEFAULT_VIBRATION_PATTERN] ?: "CONTINUOUS"
+            preferences[KEY_DEFAULT_VIBRATION_PATTERN] ?: "PULSE"
         }
 
     suspend fun setDefaultVibrationPattern(patternId: String) {
