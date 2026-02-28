@@ -57,7 +57,7 @@ class SettingsDataStore(private val context: Context) {
     // Default flash pattern
     val defaultFlashPattern: Flow<String> = context.dataStore.data
         .map { preferences ->
-            preferences[KEY_DEFAULT_FLASH_PATTERN] ?: "NONE"
+            preferences[KEY_DEFAULT_FLASH_PATTERN] ?: "SOS_BLINK"
         }
 
     suspend fun setDefaultFlashPattern(patternId: String) {

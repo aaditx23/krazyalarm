@@ -54,11 +54,11 @@ sealed class FlashPattern(val id: String, val displayName: String) {
                 "STROBE" -> Strobe
                 "PULSE" -> Pulse
                 "HEARTBEAT" -> Heartbeat
-                else -> None
+                else -> SosBlink
             }
         }
 
-        fun getAll(): List<FlashPattern> = listOf(None, AlwaysOn, SosBlink, Strobe, Pulse, Heartbeat)
+        fun getAll(): List<FlashPattern> = listOf(None, SosBlink, Strobe, Pulse, Heartbeat, AlwaysOn)
     }
 }
 

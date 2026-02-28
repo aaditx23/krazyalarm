@@ -113,7 +113,7 @@ class SettingsViewModel(
 data class SettingsUiState(
     val darkModeValue: String = "system",
     val snoozeDuration: Int = 10,
-    val defaultFlashPattern: String = "NONE",
+    val defaultFlashPattern: String = "SOS_BLINK",
     val defaultVibrationPattern: String = "PULSE",
     val defaultVibrationIntensity: String = "MEDIUM",
     val defaultVolume: Int = 100,

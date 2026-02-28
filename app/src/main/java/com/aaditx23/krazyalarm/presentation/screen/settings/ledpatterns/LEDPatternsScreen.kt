@@ -118,9 +118,14 @@ fun LEDPatternsScreen(
 
 private suspend fun playFlashPattern(context: Context, pattern: FlashPattern, durationSeconds: Int) {
     val cameraManager = context.getSystemService(Context.CAMERA_SERVICE) as? CameraManager ?: return
+    val cameraId = try {
+        cameraManager.cameraIdList.firstOrNull() ?: return
+    } catch (e: CameraAccessException) {
+        e.printStackTrace()
+        return
+    }
 
     try {
-        val cameraId = cameraManager.cameraIdList.firstOrNull() ?: return
         val endTime = System.currentTimeMillis() + (durationSeconds * 1000L)
 
         when (pattern) {
@@ -128,70 +133,53 @@ private suspend fun playFlashPattern(context: Context, pattern: FlashPattern, du
             FlashPattern.AlwaysOn -> {
                 cameraManager.setTorchMode(cameraId, true)
                 delay(durationSeconds * 1000L)
-                cameraManager.setTorchMode(cameraId, false)
             }
             FlashPattern.SosBlink -> {
                 while (System.currentTimeMillis() < endTime) {
                     // S (3 short)
                     repeat(3) {
-                        cameraManager.setTorchMode(cameraId, true)
-                        delay(200)
-                        cameraManager.setTorchMode(cameraId, false)
-                        delay(200)
+                        cameraManager.setTorchMode(cameraId, true); delay(200)
+                        cameraManager.setTorchMode(cameraId, false); delay(200)
                     }
                     delay(400)
                     // O (3 long)
                     repeat(3) {
-                        cameraManager.setTorchMode(cameraId, true)
-                        delay(600)
-                        cameraManager.setTorchMode(cameraId, false)
-                        delay(200)
+                        cameraManager.setTorchMode(cameraId, true); delay(600)
+                        cameraManager.setTorchMode(cameraId, false); delay(200)
                     }
                     delay(400)
                     // S (3 short)
                     repeat(3) {
-                        cameraManager.setTorchMode(cameraId, true)
-                        delay(200)
-                        cameraManager.setTorchMode(cameraId, false)
-                        delay(200)
+                        cameraManager.setTorchMode(cameraId, true); delay(200)
+                        cameraManager.setTorchMode(cameraId, false); delay(200)
                     }
                     delay(1000)
                 }
-                cameraManager.setTorchMode(cameraId, false)
             }
             FlashPattern.Strobe -> {
                 while (System.currentTimeMillis() < endTime) {
-                    cameraManager.setTorchMode(cameraId, true)
-                    delay(100)
-                    cameraManager.setTorchMode(cameraId, false)
-                    delay(100)
+                    cameraManager.setTorchMode(cameraId, true); delay(100)
+                    cameraManager.setTorchMode(cameraId, false); delay(100)
                 }
             }
             FlashPattern.Pulse -> {
                 while (System.currentTimeMillis() < endTime) {
-                    cameraManager.setTorchMode(cameraId, true)
-                    delay(500)
-                    cameraManager.setTorchMode(cameraId, false)
-                    delay(500)
+                    cameraManager.setTorchMode(cameraId, true); delay(500)
+                    cameraManager.setTorchMode(cameraId, false); delay(500)
                 }
             }
             FlashPattern.Heartbeat -> {
                 while (System.currentTimeMillis() < endTime) {
-                    // First beat
-                    cameraManager.setTorchMode(cameraId, true)
-                    delay(150)
-                    cameraManager.setTorchMode(cameraId, false)
-                    delay(150)
-                    // Second beat
-                    cameraManager.setTorchMode(cameraId, true)
-                    delay(150)
-                    cameraManager.setTorchMode(cameraId, false)
-                    delay(800)
+                    cameraManager.setTorchMode(cameraId, true); delay(150)
+                    cameraManager.setTorchMode(cameraId, false); delay(150)
+                    cameraManager.setTorchMode(cameraId, true); delay(150)
+                    cameraManager.setTorchMode(cameraId, false); delay(800)
                 }
             }
         }
-    } catch (e: CameraAccessException) {
-        e.printStackTrace()
+    } finally {
+        // Always turn the torch off — covers normal exit, cancellation, and exceptions
+        try { cameraManager.setTorchMode(cameraId, false) } catch (_: CameraAccessException) {}
     }
 }
 
