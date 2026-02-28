@@ -8,6 +8,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,21 +20,25 @@ fun TimePicker(
     onMinuteChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val timePickerState = rememberTimePickerState(
-        initialHour = hour,
-        initialMinute = minute,
-        is24Hour = false
-    )
+    // key() forces rememberTimePickerState to re-initialize when hour/minute change,
+    // ensuring the picker shows the correct time (e.g. current time + 1 min on create).
+    key(hour, minute) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = hour,
+            initialMinute = minute,
+            is24Hour = false
+        )
 
-    LaunchedEffect(timePickerState.hour, timePickerState.minute) {
-        onHourChange(timePickerState.hour)
-        onMinuteChange(timePickerState.minute)
+        LaunchedEffect(timePickerState.hour, timePickerState.minute) {
+            onHourChange(timePickerState.hour)
+            onMinuteChange(timePickerState.minute)
+        }
+
+        TimePicker(
+            state = timePickerState,
+            modifier = modifier
+        )
     }
-
-    TimePicker(
-        state = timePickerState,
-        modifier = modifier
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
