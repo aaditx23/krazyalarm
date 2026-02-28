@@ -215,8 +215,8 @@ class AudioAmplifier(private val context: Context) {
      *
      * Formula: mB = 2000 * log10(volume / 100)
      * - 100% = 0 mB (no boost)
-     * - 125% = ~1938 mB (~6 dB boost)
      * - 150% = ~3521 mB (~11.76 dB boost)
+     * - 200% = ~6021 mB (~20 dB boost)
      */
     private fun calculateGainMillibels(volumePercent: Int): Int {
         return when {
@@ -225,7 +225,7 @@ class AudioAmplifier(private val context: Context) {
                 val ratio = volumePercent / 100.0
                 val decibels = 20 * log10(ratio) // 20*log10 for amplitude ratio
                 val millibels = (decibels * 100).roundToInt()
-                millibels.coerceIn(0, 3000) // Cap at +30dB to prevent extreme distortion
+                millibels.coerceIn(0, 6000) // Cap at +60dB to support up to 200%
             }
         }
     }

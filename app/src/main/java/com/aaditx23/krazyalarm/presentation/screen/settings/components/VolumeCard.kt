@@ -5,6 +5,7 @@ import android.media.RingtoneManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,11 +35,11 @@ fun VolumeCard(
     }
 
     val volumeLabel = when {
-        sliderValue < 50 -> "Low"
+        sliderValue < 50  -> "Low"
         sliderValue <= 100 -> "Normal"
-        sliderValue <= 120 -> "High"
-        sliderValue <= 140 -> "Overclocked"
-        else -> "Maximum"
+        sliderValue <= 130 -> "High"
+        sliderValue <= 160 -> "Overclocked"
+        else               -> "Maximum"
     }
 
     val isOverclocked = sliderValue > 100
@@ -107,6 +108,7 @@ fun VolumeCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Slider row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -121,10 +123,8 @@ fun VolumeCard(
                     onValueChange = {
                         sliderValue = it
                         val currentValue = it.roundToInt()
-                        // Play preview sound only when value changes
                         if (currentValue != lastPlayedValue) {
                             lastPlayedValue = currentValue
-                            // Stop previous sound and play new one
                             audioAmplifier.stop()
                             playVolumePreview(context, audioAmplifier, currentValue)
                         }
@@ -132,11 +132,10 @@ fun VolumeCard(
                     onValueChangeFinished = {
                         val newVolume = sliderValue.roundToInt()
                         onVolumeChange(newVolume)
-                        // Reset last played value but DON'T stop the sound
                         lastPlayedValue = -1
                     },
-                    valueRange = 1f..150f,
-                    steps = 148, // 149 discrete values (1-150)
+                    valueRange = 1f..200f,
+                    steps = 198, // 200 discrete values (1–200)
                     modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
                     colors = SliderDefaults.colors(
                         thumbColor = if (isOverclocked) Color(0xFFFF6B35) else MaterialTheme.colorScheme.primary,
@@ -144,11 +143,43 @@ fun VolumeCard(
                     )
                 )
                 Text(
-                    text = "150%",
+                    text = "200%",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (sliderValue > 100) Color(0xFFFF6B35) else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = if (sliderValue > 100) FontWeight.Bold else FontWeight.Normal
                 )
+            }
+
+            // Overclock disclaimer
+            if (isOverclocked) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFF6B35).copy(alpha = 0.12f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = Color(0xFFFF6B35),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "⚠️ Prolonged use above 100% can damage your speaker and battery.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFFF6B35),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
 
             // Test button

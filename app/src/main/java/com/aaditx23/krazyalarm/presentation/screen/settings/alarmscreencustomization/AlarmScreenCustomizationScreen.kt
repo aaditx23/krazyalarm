@@ -28,7 +28,7 @@ fun AlarmScreenCustomizationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Alarm Screen") },
+                title = { Text("Alarm Screen Customization") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(

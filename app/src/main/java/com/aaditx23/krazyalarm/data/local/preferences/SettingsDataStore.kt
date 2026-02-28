@@ -98,7 +98,7 @@ class SettingsDataStore(private val context: Context) {
 
     suspend fun setDefaultVolume(volume: Int) {
         context.dataStore.edit { preferences ->
-            preferences[KEY_DEFAULT_VOLUME] = volume.coerceIn(1, 150)
+            preferences[KEY_DEFAULT_VOLUME] = volume.coerceIn(1, 200)
         }
     }
 
