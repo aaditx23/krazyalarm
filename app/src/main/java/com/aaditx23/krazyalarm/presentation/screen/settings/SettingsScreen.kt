@@ -6,7 +6,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Alarm
-import androidx.compose.material.icons.filled.AlarmOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -98,6 +97,12 @@ fun SettingsScreen(
             ButtonMotionSpeedCard(
                 speed = uiState.buttonMotionSpeed,
                 onSpeedChange = { viewModel.updateButtonMotionSpeed(it) }
+            )
+
+            // Button Flicker
+            ButtonFlickerCard(
+                flickerIntervalMs = uiState.buttonFlickerIntervalMs,
+                onFlickerIntervalChange = { viewModel.updateButtonFlickerInterval(it) }
             )
 
             // Test Alarm Button

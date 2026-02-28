@@ -26,4 +26,7 @@ interface SettingsRepository {
 
     val buttonMotionSpeed: Flow<Int>
     suspend fun setButtonMotionSpeed(speed: Int)
+
+    val buttonFlickerIntervalMs: Flow<Int>
+    suspend fun setButtonFlickerIntervalMs(intervalMs: Int)
 }

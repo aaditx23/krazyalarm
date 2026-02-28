@@ -23,6 +23,7 @@ class SettingsDataStore(private val context: Context) {
         private val KEY_DEFAULT_VOLUME = intPreferencesKey("default_volume")
         private val KEY_ALARM_DURATION_MINUTES = intPreferencesKey("alarm_duration_minutes")
         private val KEY_BUTTON_MOTION_SPEED = intPreferencesKey("button_motion_speed")
+        private val KEY_BUTTON_FLICKER_INTERVAL_MS = intPreferencesKey("button_flicker_interval_ms")
 
         const val DARK_MODE_LIGHT = "LIGHT"
         const val DARK_MODE_DARK = "DARK"
@@ -122,6 +123,18 @@ class SettingsDataStore(private val context: Context) {
     suspend fun setButtonMotionSpeed(speed: Int) {
         context.dataStore.edit { preferences ->
             preferences[KEY_BUTTON_MOTION_SPEED] = speed.coerceIn(0, 8)
+        }
+    }
+
+    // Button flicker interval in ms (0 = disabled)
+    val buttonFlickerIntervalMs: Flow<Int> = context.dataStore.data
+        .map { preferences ->
+            preferences[KEY_BUTTON_FLICKER_INTERVAL_MS] ?: 0
+        }
+
+    suspend fun setButtonFlickerIntervalMs(intervalMs: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_BUTTON_FLICKER_INTERVAL_MS] = intervalMs.coerceAtLeast(0)
         }
     }
 }

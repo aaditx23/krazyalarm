@@ -55,4 +55,10 @@ class SettingsRepositoryImpl(
     override suspend fun setButtonMotionSpeed(speed: Int) {
         settingsDataStore.setButtonMotionSpeed(speed)
     }
+
+    override val buttonFlickerIntervalMs: Flow<Int> = settingsDataStore.buttonFlickerIntervalMs
+
+    override suspend fun setButtonFlickerIntervalMs(intervalMs: Int) {
+        settingsDataStore.setButtonFlickerIntervalMs(intervalMs)
+    }
 }

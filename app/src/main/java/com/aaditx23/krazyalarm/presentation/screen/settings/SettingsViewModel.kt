@@ -22,7 +22,8 @@ class SettingsViewModel(
 
     private fun loadSettings() {
         viewModelScope.launch {
-            combine(
+            // combine only supports up to 8 flows; split into two combines
+            val first8 = combine(
                 settingsRepository.darkMode,
                 settingsRepository.snoozeDefaultMinutes,
                 settingsRepository.defaultFlashPattern,
@@ -42,6 +43,10 @@ class SettingsViewModel(
                     alarmDurationMinutes = flows[6] as Int,
                     buttonMotionSpeed = flows[7] as Int
                 )
+            }
+
+            combine(first8, settingsRepository.buttonFlickerIntervalMs) { state, flicker ->
+                state.copy(buttonFlickerIntervalMs = flicker)
             }.collect { state ->
                 _uiState.value = state
             }
@@ -97,6 +102,12 @@ class SettingsViewModel(
             settingsRepository.setButtonMotionSpeed(speed)
         }
     }
+
+    fun updateButtonFlickerInterval(intervalMs: Int) {
+        viewModelScope.launch {
+            settingsRepository.setButtonFlickerIntervalMs(intervalMs)
+        }
+    }
 }
 
 data class SettingsUiState(
@@ -107,6 +118,7 @@ data class SettingsUiState(
     val defaultVibrationIntensity: String = "MEDIUM",
     val defaultVolume: Int = 100,
     val alarmDurationMinutes: Int = 1,
-    val buttonMotionSpeed: Int = 4
+    val buttonMotionSpeed: Int = 4,
+    val buttonFlickerIntervalMs: Int = 0  // 0 = disabled
 )
 

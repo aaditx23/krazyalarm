@@ -73,7 +73,8 @@ fun AlarmRingingScreen(
                     onDismiss = onDismiss,
                     onSnooze = onSnooze,
                     viewModel = viewModel,
-                    buttonMotionSpeed = state.buttonMotionSpeed
+                    buttonMotionSpeed = state.buttonMotionSpeed,
+                    buttonFlickerIntervalMs = state.buttonFlickerIntervalMs
                 )
             }
             is AlarmRingingUiState.Error -> {
@@ -108,7 +109,8 @@ private fun AlarmRingingContent(
     onDismiss: () -> Unit,
     onSnooze: () -> Unit,
     viewModel: AlarmRingingViewModel,
-    buttonMotionSpeed: Int
+    buttonMotionSpeed: Int,
+    buttonFlickerIntervalMs: Int
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val screenWidthPx = constraints.maxWidth.toFloat()
@@ -153,6 +155,7 @@ private fun AlarmRingingContent(
             screenWidthPx = screenWidthPx,
             screenHeightPx = screenHeightPx,
             buttonMotionSpeed = buttonMotionSpeed,
+            buttonFlickerIntervalMs = buttonFlickerIntervalMs,
             modifier = Modifier.fillMaxSize()
         )
     }

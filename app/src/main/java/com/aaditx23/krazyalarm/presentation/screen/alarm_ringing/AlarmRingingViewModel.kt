@@ -8,6 +8,7 @@ import com.aaditx23.krazyalarm.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -29,12 +30,12 @@ class AlarmRingingViewModel(
     private fun loadAlarm() {
         viewModelScope.launch {
             try {
-                // Get button motion speed from settings
-                var buttonMotionSpeed = 4
-                settingsRepository.buttonMotionSpeed.collect { speed ->
-                    buttonMotionSpeed = speed
+                combine(
+                    settingsRepository.buttonMotionSpeed,
+                    settingsRepository.buttonFlickerIntervalMs
+                ) { speed, flicker -> Pair(speed, flicker) }
+                .collect { (buttonMotionSpeed, buttonFlickerIntervalMs) ->
 
-                    // Handle test alarm scenario
                     if (alarmId == -1L) {
                         val currentCalendar = Calendar.getInstance()
                         val testAlarm = Alarm(
@@ -55,7 +56,8 @@ class AlarmRingingViewModel(
                         _uiState.value = AlarmRingingUiState.Ringing(
                             alarm = testAlarm,
                             currentTime = getCurrentTimeString(),
-                            buttonMotionSpeed = buttonMotionSpeed
+                            buttonMotionSpeed = buttonMotionSpeed,
+                            buttonFlickerIntervalMs = buttonFlickerIntervalMs
                         )
                         return@collect
                     }
@@ -65,7 +67,8 @@ class AlarmRingingViewModel(
                         _uiState.value = AlarmRingingUiState.Ringing(
                             alarm = alarm,
                             currentTime = getCurrentTimeString(),
-                            buttonMotionSpeed = buttonMotionSpeed
+                            buttonMotionSpeed = buttonMotionSpeed,
+                            buttonFlickerIntervalMs = buttonFlickerIntervalMs
                         )
                     } else {
                         _uiState.value = AlarmRingingUiState.Error("Alarm not found")
@@ -96,6 +99,7 @@ sealed class AlarmRingingUiState {
         val alarm: Alarm,
         val currentTime: String,
         val buttonMotionSpeed: Int,
+        val buttonFlickerIntervalMs: Int = 0,
         val alarmStartTime: String = getCurrentStartTimeString()
     ) : AlarmRingingUiState()
     data class Error(val message: String) : AlarmRingingUiState()
