@@ -189,9 +189,12 @@ fun DetailsModalSheet(
         TimePickerDialog(
             initialHour = editState.hour,
             initialMinute = editState.minute,
-            onHourChange = viewModel::updateHour,
-            onMinuteChange = viewModel::updateMinute,
-            onDismiss = { showTimePicker = false }
+            onDismiss = { showTimePicker = false },
+            onConfirm = { h, m ->
+                viewModel.updateHour(h)
+                viewModel.updateMinute(m)
+                showTimePicker = false
+            }
         )
     }
 

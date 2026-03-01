@@ -39,26 +39,32 @@ class DetailsModalViewModel(
     fun startCreateAlarm() {
         editingAlarmId = null
         android.util.Log.d("DetailsModalViewModel", "startCreateAlarm called")
-        viewModelScope.launch {
-            val currentTime = java.util.Calendar.getInstance()
-            // Add 1 minute to current time
-            currentTime.add(java.util.Calendar.MINUTE, 1)
 
-            // Load default patterns from settings
+        // Set hour/minute synchronously so the time picker shows the correct time
+        // immediately if it auto-opens before the coroutine finishes.
+        val currentTime = java.util.Calendar.getInstance().apply {
+            add(java.util.Calendar.MINUTE, 1)
+        }
+        _editState.value = DetailsModalState(
+            hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
+            minute = currentTime.get(java.util.Calendar.MINUTE),
+            isLoadingRingtone = true
+        )
+
+        viewModelScope.launch {
+            // Load default patterns from settings (suspend calls)
             val defaultFlashPatternId = settingsRepository.defaultFlashPattern.first()
             val defaultVibrationPatternId = settingsRepository.defaultVibrationPattern.first()
             val defaultSnoozeDuration = settingsRepository.snoozeDefaultMinutes.first()
             val defaultAlarmDuration = settingsRepository.alarmDurationMinutes.first()
 
-            _editState.value = DetailsModalState(
-                hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
-                minute = currentTime.get(java.util.Calendar.MINUTE),
+            _editState.value = _editState.value.copy(
                 flashPattern = FlashPattern.fromId(defaultFlashPatternId),
                 vibrationPattern = VibrationPattern.fromId(defaultVibrationPatternId),
                 snoozeDurationMinutes = defaultSnoozeDuration,
                 alarmDurationMinutes = defaultAlarmDuration,
                 ringtoneName = "",
-                isLoadingRingtone = true // Set to true so UI shows loading
+                isLoadingRingtone = true
             )
             android.util.Log.d("DetailsModalViewModel", "State initialized - loading: ${_editState.value.isLoadingRingtone}")
         }

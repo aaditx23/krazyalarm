@@ -144,12 +144,10 @@ fun AlarmItemCard(
         TimePickerDialog(
             initialHour = pickerHour,
             initialMinute = pickerMinute,
-            onHourChange = { pickerHour = it },
-            onMinuteChange = { pickerMinute = it },
             onDismiss = { showTimePicker = false },
-            onConfirm = {
+            onConfirm = { h, m ->
                 showTimePicker = false
-                onTimeChange(pickerHour, pickerMinute)
+                onTimeChange(h, m)
             }
         )
     }

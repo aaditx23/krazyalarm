@@ -7,63 +7,32 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.key
-import androidx.compose.ui.Modifier
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun TimePicker(
-    hour: Int,
-    minute: Int,
-    onHourChange: (Int) -> Unit,
-    onMinuteChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // key() forces rememberTimePickerState to re-initialize when hour/minute change,
-    // ensuring the picker shows the correct time (e.g. current time + 1 min on create).
-    key(hour, minute) {
-        val timePickerState = rememberTimePickerState(
-            initialHour = hour,
-            initialMinute = minute,
-            is24Hour = false
-        )
-
-        LaunchedEffect(timePickerState.hour, timePickerState.minute) {
-            onHourChange(timePickerState.hour)
-            onMinuteChange(timePickerState.minute)
-        }
-
-        TimePicker(
-            state = timePickerState,
-            modifier = modifier
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerDialog(
     initialHour: Int,
     initialMinute: Int,
-    onHourChange: (Int) -> Unit,
-    onMinuteChange: (Int) -> Unit,
     onDismiss: () -> Unit,
-    onConfirm: (() -> Unit)? = null
+    onConfirm: (hour: Int, minute: Int) -> Unit
 ) {
+    // State lives here for the lifetime of the dialog - no external updates during selection.
+    val timePickerState = rememberTimePickerState(
+        initialHour = initialHour,
+        initialMinute = initialMinute,
+        is24Hour = false
+    )
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Select Time") },
         text = {
-            TimePicker(
-                hour = initialHour,
-                minute = initialMinute,
-                onHourChange = onHourChange,
-                onMinuteChange = onMinuteChange
-            )
+            TimePicker(state = timePickerState)
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm?.invoke() ?: onDismiss() }) {
+            TextButton(onClick = {
+                onConfirm(timePickerState.hour, timePickerState.minute)
+            }) {
                 Text("OK")
             }
         },
