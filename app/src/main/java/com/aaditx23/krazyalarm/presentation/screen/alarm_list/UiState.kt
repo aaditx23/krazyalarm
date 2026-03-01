@@ -11,5 +11,7 @@ data class UiState(
     val isSelectMode: Boolean = false,
     val selectedAlarms: Set<Long> = emptySet(),
     val editingAlarmId: Long? = null, // null = create mode, non-null = edit mode
-    val autoOpenTimePicker: Boolean = false
+    val showCreateTimePicker: Boolean = false, // show time picker before opening the sheet
+    val createInitialHour: Int = 0,
+    val createInitialMinute: Int = 0
 )

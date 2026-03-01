@@ -37,6 +37,7 @@ import com.aaditx23.krazyalarm.presentation.components.EmptyState
 import com.aaditx23.krazyalarm.presentation.components.ErrorState
 import com.aaditx23.krazyalarm.presentation.components.LoadingState
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.DetailsModalSheet
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimePickerDialog
 
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.components.AlarmItemCard
 import kotlinx.coroutines.launch
@@ -192,13 +193,23 @@ fun AlarmListScreen(
         )
     }
 
+    // Create flow: show time picker immediately before opening the sheet
+    if (uiState.showCreateTimePicker) {
+        TimePickerDialog(
+            initialHour = uiState.createInitialHour,
+            initialMinute = uiState.createInitialMinute,
+            onDismiss = { viewModel.dismissCreateTimePicker() },
+            onConfirm = { h, m -> viewModel.confirmCreateTime(h, m) }
+        )
+    }
+
     // Details Modal Sheet
     if (uiState.showSheet) {
         DetailsModalSheet(
             sheetState = sheetState,
             editingAlarmId = uiState.editingAlarmId,
-            autoOpenTimePicker = uiState.autoOpenTimePicker,
-            onTimePickerConsumed = { viewModel.consumeAutoOpenTimePicker() },
+            initialHour = uiState.createInitialHour,
+            initialMinute = uiState.createInitialMinute,
             onDismiss = {
                 viewModel.showSheet(false)
             },

@@ -46,8 +46,8 @@ import java.util.Calendar
 fun DetailsModalSheet(
     sheetState: SheetState,
     editingAlarmId: Long? = null,
-    autoOpenTimePicker: Boolean = false,
-    onTimePickerConsumed: () -> Unit = {},
+    initialHour: Int = 0,
+    initialMinute: Int = 0,
     onDismiss: () -> Unit,
     onAlarmSaved: () -> Unit,
     viewModel: DetailsModalViewModel = koinViewModel()
@@ -59,16 +59,7 @@ fun DetailsModalSheet(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
 
-    // Auto-open time picker when FAB creates a new alarm
-    LaunchedEffect(autoOpenTimePicker) {
-        if (autoOpenTimePicker) {
-            showTimePicker = true
-            onTimePickerConsumed()
-        }
-    }
-
-    // Function to dismiss with animation // The sheet animates out smoothly while the composable leaves composition quickly
-    // This prevents touch blocking and makes the UI feel more responsive
+    // Function to dismiss with animation
     val dismissWithAnimation: () -> Unit = {
         coroutineScope.launch {
             sheetState.hide()
@@ -77,20 +68,17 @@ fun DetailsModalSheet(
     }
 
     // Initialize viewmodel when editingAlarmId changes
-    // DisposableEffect runs synchronously during composition (before rendering)
-    // This prevents showing stale content from previous modal
     DisposableEffect(editingAlarmId) {
         android.util.Log.d("DetailsModalSheet", "=== Initializing modal with editingAlarmId: $editingAlarmId ===")
         if (editingAlarmId != null) {
             android.util.Log.d("DetailsModalSheet", "Starting EDIT mode for alarm ID: $editingAlarmId")
             viewModel.startEditAlarm(editingAlarmId)
         } else {
-            android.util.Log.d("DetailsModalSheet", "Starting CREATE mode")
-            viewModel.startCreateAlarm()
+            android.util.Log.d("DetailsModalSheet", "Starting CREATE mode with $initialHour:$initialMinute")
+            viewModel.startCreateAlarm(initialHour, initialMinute)
         }
 
         onDispose {
-            // Cleanup if needed when editingAlarmId changes
             android.util.Log.d("DetailsModalSheet", "=== Disposing previous modal state ===")
         }
     }

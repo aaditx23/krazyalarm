@@ -148,11 +148,32 @@ class AlarmListViewModel(
     }
 
     fun openCreateAlarmSheet() {
-        _uiState.value = _uiState.value.copy(showSheet = true, editingAlarmId = null, autoOpenTimePicker = true)
+        val currentTime = java.util.Calendar.getInstance().apply {
+            add(java.util.Calendar.MINUTE, 1)
+        }
+        _uiState.value = _uiState.value.copy(
+            showCreateTimePicker = true,
+            createInitialHour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
+            createInitialMinute = currentTime.get(java.util.Calendar.MINUTE)
+        )
+    }
+
+    fun confirmCreateTime(hour: Int, minute: Int) {
+        _uiState.value = _uiState.value.copy(
+            showCreateTimePicker = false,
+            showSheet = true,
+            editingAlarmId = null,
+            createInitialHour = hour,
+            createInitialMinute = minute
+        )
+    }
+
+    fun dismissCreateTimePicker() {
+        _uiState.value = _uiState.value.copy(showCreateTimePicker = false)
     }
 
     fun openEditAlarmSheet(alarmId: Long) {
-        _uiState.value = _uiState.value.copy(showSheet = true, editingAlarmId = alarmId, autoOpenTimePicker = false)
+        _uiState.value = _uiState.value.copy(showSheet = true, editingAlarmId = alarmId)
     }
 
     fun showDeleteDialog(show: Boolean) {
@@ -171,9 +192,6 @@ class AlarmListViewModel(
         _uiEvents.value = null
     }
 
-    fun consumeAutoOpenTimePicker() {
-        _uiState.value = _uiState.value.copy(autoOpenTimePicker = false)
-    }
 
     private fun formatAlarmScheduleMessage(alarm: com.aaditx23.krazyalarm.domain.models.Alarm): String =
         AlarmScheduleFormatter.snackbarMessage(alarm)

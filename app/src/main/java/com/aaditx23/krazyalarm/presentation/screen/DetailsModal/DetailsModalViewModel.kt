@@ -36,18 +36,13 @@ class DetailsModalViewModel(
 
     private var editingAlarmId: Long? = null
 
-    fun startCreateAlarm() {
+    fun startCreateAlarm(hour: Int, minute: Int) {
         editingAlarmId = null
-        android.util.Log.d("DetailsModalViewModel", "startCreateAlarm called")
+        android.util.Log.d("DetailsModalViewModel", "startCreateAlarm called with $hour:$minute")
 
-        // Set hour/minute synchronously so the time picker shows the correct time
-        // immediately if it auto-opens before the coroutine finishes.
-        val currentTime = java.util.Calendar.getInstance().apply {
-            add(java.util.Calendar.MINUTE, 1)
-        }
         _editState.value = DetailsModalState(
-            hour = currentTime.get(java.util.Calendar.HOUR_OF_DAY),
-            minute = currentTime.get(java.util.Calendar.MINUTE),
+            hour = hour,
+            minute = minute,
             isLoadingRingtone = true
         )
 
