@@ -1,6 +1,4 @@
 package com.aaditx23.krazyalarm.presentation.screen.alarm_list
-
-import UiEvent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aaditx23.krazyalarm.domain.models.AlarmInput
@@ -132,14 +130,27 @@ class AlarmListViewModel(
     fun deleteSelectedAlarms() {
         viewModelScope.launch {
             val current = _uiState.value
+            val count = current.selectedAlarms.size
+            var anyFailed = false
             current.selectedAlarms.forEach { alarmId ->
                 deleteAlarmUseCase(alarmId)
-                    .onFailure {
-                        _uiEvents.value = UiEvent.Error("Failed to delete some alarms")
-                    }
+                    .onFailure { anyFailed = true }
             }
             _uiState.value = current.copy(selectedAlarms = emptySet(), isSelectMode = false, showDeleteDialog = false)
             loadAlarms()
+            if (anyFailed) {
+                _uiEvents.value = UiEvent.Error("Failed to delete some alarms")
+            } else {
+                _uiEvents.value = UiEvent.Success("Deleted $count alarm${if (count != 1) "s" else ""}")
+            }
+        }
+    }
+
+    fun handleAlarmSaved(message: String, enabled: Boolean) {
+        showSheet(false)
+        loadAlarms()
+        if (enabled && message.isNotEmpty()) {
+            _uiEvents.value = UiEvent.Success(message)
         }
     }
 

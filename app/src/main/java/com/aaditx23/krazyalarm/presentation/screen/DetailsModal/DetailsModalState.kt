@@ -27,6 +27,6 @@ data class DetailsModalState(
 sealed class AlarmEditEvent {
     object SaveSuccess : AlarmEditEvent()
     data class SaveSuccessWithTime(val hours: Int, val minutes: Int) : AlarmEditEvent()
-    data class SaveSuccessWithMessage(val message: String) : AlarmEditEvent()
+    data class SaveSuccessWithMessage(val message: String, val enabled: Boolean) : AlarmEditEvent()
     data class SaveError(val message: String) : AlarmEditEvent()
 }

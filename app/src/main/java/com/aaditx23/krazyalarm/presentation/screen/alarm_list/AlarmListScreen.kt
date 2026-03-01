@@ -30,7 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.presentation.components.EmptyState
@@ -40,7 +39,6 @@ import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.DetailsModalShee
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimePickerDialog
 
 import com.aaditx23.krazyalarm.presentation.screen.alarm_list.components.AlarmItemCard
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,18 +54,13 @@ fun AlarmListScreen(
     )
     val uiEvents by viewModel.uiEvents.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
 
-    // Handle UI events (toggle alarm success/error messages)
+    // Single centralized snackbar handler
     LaunchedEffect(uiEvents) {
         uiEvents?.let { event ->
             when (event) {
-                is UiEvent.Error -> {
-                    snackbarHostState.showSnackbar(event.message)
-                }
-                is UiEvent.Success -> {
-                    snackbarHostState.showSnackbar(event.message)
-                }
+                is UiEvent.Error -> snackbarHostState.showSnackbar(event.message)
+                is UiEvent.Success -> snackbarHostState.showSnackbar(event.message)
             }
             viewModel.consumeUiEvent()
         }
@@ -178,9 +171,6 @@ fun AlarmListScreen(
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteSelectedAlarms()
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar("Deleted ${uiState.selectedAlarms.size} alarm(s)")
-                    }
                 }) {
                     Text("Delete")
                 }
@@ -213,14 +203,8 @@ fun AlarmListScreen(
             onDismiss = {
                 viewModel.showSheet(false)
             },
-            onAlarmSaved = { message ->
-                viewModel.showSheet(false)
-                viewModel.loadAlarms()
-                if (message.isNotEmpty()) {
-                    coroutineScope.launch {
-                        snackbarHostState.showSnackbar(message)
-                    }
-                }
+            onAlarmSaved = { message, enabled ->
+                viewModel.handleAlarmSaved(message, enabled)
             }
         )
     }

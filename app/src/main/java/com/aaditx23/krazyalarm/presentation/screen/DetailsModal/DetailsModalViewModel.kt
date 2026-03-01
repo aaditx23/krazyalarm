@@ -245,7 +245,7 @@ class DetailsModalViewModel(
                     android.util.Log.d("DetailsModalViewModel", "Save successful - alarm ID: ${alarm.id}, was editing: $editingAlarmId")
                     _editState.value = _editState.value.copy(isSaving = false)
                     val message = formatAlarmScheduleMessage(alarm)
-                    _editEvents.value = AlarmEditEvent.SaveSuccessWithMessage(message)
+                    _editEvents.value = AlarmEditEvent.SaveSuccessWithMessage(message, state.enabled)
                 } else {
                     android.util.Log.e("DetailsModalViewModel", "Save failed: ${result.exceptionOrNull()?.message}")
                     _editState.value = _editState.value.copy(isSaving = false)
