@@ -49,7 +49,7 @@ fun DetailsModalSheet(
     initialHour: Int = 0,
     initialMinute: Int = 0,
     onDismiss: () -> Unit,
-    onAlarmSaved: () -> Unit,
+    onAlarmSaved: (message: String) -> Unit,
     viewModel: DetailsModalViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
@@ -120,10 +120,14 @@ fun DetailsModalSheet(
         editEvents?.let { event ->
             when (event) {
                 is AlarmEditEvent.SaveSuccess,
-                is AlarmEditEvent.SaveSuccessWithTime,
+                is AlarmEditEvent.SaveSuccessWithTime -> {
+                    sheetState.hide()
+                    onAlarmSaved("")
+                    viewModel.consumeEditEvent()
+                }
                 is AlarmEditEvent.SaveSuccessWithMessage -> {
                     sheetState.hide()
-                    onAlarmSaved()
+                    onAlarmSaved(event.message)
                     viewModel.consumeEditEvent()
                 }
                 is AlarmEditEvent.SaveError -> {

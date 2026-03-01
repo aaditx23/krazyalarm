@@ -213,9 +213,14 @@ fun AlarmListScreen(
             onDismiss = {
                 viewModel.showSheet(false)
             },
-            onAlarmSaved = {
+            onAlarmSaved = { message ->
                 viewModel.showSheet(false)
                 viewModel.loadAlarms()
+                if (message.isNotEmpty()) {
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(message)
+                    }
+                }
             }
         )
     }
