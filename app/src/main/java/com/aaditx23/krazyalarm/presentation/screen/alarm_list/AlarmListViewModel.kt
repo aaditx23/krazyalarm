@@ -1,7 +1,9 @@
 package com.aaditx23.krazyalarm.presentation.screen.alarm_list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aaditx23.krazyalarm.domain.models.Alarm
 import com.aaditx23.krazyalarm.domain.models.AlarmInput
+import com.aaditx23.krazyalarm.domain.usecase.CreateAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmsUseCase
@@ -20,6 +22,7 @@ class AlarmListViewModel(
     private val getAlarmsUseCase: GetAlarmsUseCase,
     private val toggleAlarmUseCase: ToggleAlarmUseCase,
     private val deleteAlarmUseCase: DeleteAlarmUseCase,
+    private val createAlarmUseCase: CreateAlarmUseCase,
     private val getAlarmByIdUseCase: GetAlarmByIdUseCase,
     private val updateAlarmUseCase: UpdateAlarmUseCase
 ) : ViewModel() {
@@ -60,6 +63,46 @@ class AlarmListViewModel(
             deleteAlarmUseCase(alarmId)
                 .onFailure { exception ->
                     _uiEvents.value = UiEvent.Error("Failed to delete alarm: ${exception.message}")
+                }
+        }
+    }
+
+    /**
+     * Swipe-to-delete: immediately remove from DB but emit an [UiEvent.AlarmDeleted]
+     * so the UI can offer an Undo snackbar action.
+     */
+    fun swipeDeleteAlarm(alarm: Alarm) {
+        viewModelScope.launch {
+            deleteAlarmUseCase(alarm.id)
+                .onSuccess {
+                    _uiEvents.value = UiEvent.AlarmDeleted(alarm)
+                }
+                .onFailure { exception ->
+                    _uiEvents.value = UiEvent.Error("Failed to delete alarm: ${exception.message}")
+                }
+        }
+    }
+
+    /** Re-create the alarm that was just swipe-deleted (undo). */
+    fun undoDelete(alarm: Alarm) {
+        viewModelScope.launch {
+            val input = AlarmInput(
+                hour = alarm.hour,
+                minute = alarm.minute,
+                days = alarm.days,
+                enabled = alarm.enabled,
+                label = alarm.label,
+                ringtoneUri = alarm.ringtoneUri,
+                flashPatternId = alarm.flashPatternId,
+                vibrationPatternId = alarm.vibrationPatternId,
+                vibrationIntensity = alarm.vibrationIntensity,
+                snoozeDurationMinutes = alarm.snoozeDurationMinutes,
+                alarmDurationMinutes = alarm.alarmDurationMinutes,
+                scheduledDate = alarm.scheduledDate
+            )
+            createAlarmUseCase(input)
+                .onFailure {
+                    _uiEvents.value = UiEvent.Error("Failed to restore alarm")
                 }
         }
     }
