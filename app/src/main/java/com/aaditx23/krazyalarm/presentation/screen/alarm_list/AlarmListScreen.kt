@@ -29,9 +29,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import com.aaditx23.krazyalarm.presentation.components.EmptyState
 import com.aaditx23.krazyalarm.presentation.components.ErrorState
 import com.aaditx23.krazyalarm.presentation.components.LoadingState
@@ -55,12 +58,21 @@ fun AlarmListScreen(
     val uiEvents by viewModel.uiEvents.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Single centralized snackbar handler
+    // Single shared ticker — one coroutine for the whole screen, all cards read from this
+    var nowMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000L)
+            nowMillis = System.currentTimeMillis()
+        }
+    }
+
+    // Only show snackbar for errors
     LaunchedEffect(uiEvents) {
         uiEvents?.let { event ->
             when (event) {
                 is UiEvent.Error -> snackbarHostState.showSnackbar(event.message)
-                is UiEvent.Success -> snackbarHostState.showSnackbar(event.message)
+                is UiEvent.Success -> { /* no snackbar for success */ }
             }
             viewModel.consumeUiEvent()
         }
@@ -129,6 +141,7 @@ fun AlarmListScreen(
                         ) { alarm ->
                             AlarmItemCard(
                                 alarm = alarm,
+                                nowMillis = nowMillis,
                                 isSelectMode = uiState.isSelectMode,
                                 isSelected = uiState.selectedAlarms.contains(alarm.id),
                                 onToggle = { enabled ->

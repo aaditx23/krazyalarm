@@ -49,16 +49,6 @@ class AlarmListViewModel(
     fun toggleAlarm(alarmId: Long, enabled: Boolean) {
         viewModelScope.launch {
             toggleAlarmUseCase(alarmId, enabled)
-                .onSuccess {
-                    if (enabled) {
-                        // Get the alarm details to show schedule message
-                        val alarm = getAlarmByIdUseCase(alarmId)
-                        if (alarm != null) {
-                            val message = formatAlarmScheduleMessage(alarm)
-                            _uiEvents.value = UiEvent.Success(message)
-                        }
-                    }
-                }
                 .onFailure {
                     _uiEvents.value = UiEvent.Error("Failed to ${if (enabled) "enable" else "disable"} alarm")
                 }
@@ -92,10 +82,6 @@ class AlarmListViewModel(
                 scheduledDate = existing.scheduledDate
             )
             updateAlarmUseCase(alarmId, input)
-                .onSuccess { alarm ->
-                    val message = formatAlarmScheduleMessage(alarm)
-                    _uiEvents.value = UiEvent.Success(message)
-                }
                 .onFailure {
                     _uiEvents.value = UiEvent.Error("Failed to update alarm time")
                 }
@@ -140,8 +126,6 @@ class AlarmListViewModel(
             loadAlarms()
             if (anyFailed) {
                 _uiEvents.value = UiEvent.Error("Failed to delete some alarms")
-            } else {
-                _uiEvents.value = UiEvent.Success("Deleted $count alarm${if (count != 1) "s" else ""}")
             }
         }
     }
@@ -149,9 +133,6 @@ class AlarmListViewModel(
     fun handleAlarmSaved(message: String, enabled: Boolean) {
         showSheet(false)
         loadAlarms()
-        if (enabled && message.isNotEmpty()) {
-            _uiEvents.value = UiEvent.Success(message)
-        }
     }
 
     fun showSheet(show: Boolean) {

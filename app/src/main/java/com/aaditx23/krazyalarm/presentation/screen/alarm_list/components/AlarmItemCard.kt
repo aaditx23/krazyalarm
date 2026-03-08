@@ -27,12 +27,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.domain.models.Alarm
 import com.aaditx23.krazyalarm.domain.util.AlarmScheduleFormatter
+import com.aaditx23.krazyalarm.domain.util.AlarmTimeCalculator
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimePickerDialog
 
 @SuppressLint("DefaultLocale")
 @Composable
 fun AlarmItemCard(
     alarm: Alarm,
+    nowMillis: Long,
     isSelectMode: Boolean,
     isSelected: Boolean,
     onToggle: (Boolean) -> Unit,
@@ -46,6 +48,13 @@ fun AlarmItemCard(
     var showTimePicker by remember { mutableStateOf(false) }
     var pickerHour by remember(alarm.hour) { mutableIntStateOf(alarm.hour) }
     var pickerMinute by remember(alarm.minute) { mutableIntStateOf(alarm.minute) }
+
+    // Trigger time is only recomputed when the alarm itself changes (data class equality).
+    // The countdown then derives from (triggerTime - nowMillis) — pure subtraction, no coroutine.
+    val triggerTime = remember(alarm) {
+        if (alarm.enabled) AlarmTimeCalculator.getNextTriggerTime(alarm) else 0L
+    }
+    val remainingMillis = if (alarm.enabled) (triggerTime - nowMillis).coerceAtLeast(0L) else 0L
 
     Box(
         modifier = modifier
@@ -73,7 +82,7 @@ fun AlarmItemCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Row(
-                        modifier = Modifier.padding(vertical = 12.dp).fillMaxWidth(),
+                        modifier = Modifier.padding(vertical = 6.dp).padding(start=4.dp).fillMaxWidth(),
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -96,6 +105,21 @@ fun AlarmItemCard(
                                 modifier = Modifier.padding(horizontal = 12.dp)
                             )
                         }
+                    }
+                    // Countdown — only shown when enabled
+                    if (alarm.enabled) {
+                        val totalSeconds = remainingMillis / 1000
+                        val days    = totalSeconds / 86400
+                        val hours   = (totalSeconds % 86400) / 3600
+                        val minutes = (totalSeconds % 3600) / 60
+                        val seconds = totalSeconds % 60
+                        Text(
+                            text = String.format("%02d:%02d:%02d:%02d", days, hours, minutes, seconds),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.W700,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 8.dp)
+                        )
                     }
 
                     // Time — clickable, opens time picker
@@ -130,6 +154,7 @@ fun AlarmItemCard(
                             )
                         }
                     }
+
                 }
 
                 Switch(
