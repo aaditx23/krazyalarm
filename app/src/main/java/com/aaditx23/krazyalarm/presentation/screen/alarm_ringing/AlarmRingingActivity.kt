@@ -10,9 +10,11 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.lifecycleScope
 import com.aaditx23.krazyalarm.data.scheduler.AlarmRingingService
 import com.aaditx23.krazyalarm.domain.repository.SettingsRepository
 import com.aaditx23.krazyalarm.presentation.theme.KrazyAlarmTheme
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -63,14 +65,16 @@ class AlarmRingingActivity : ComponentActivity() {
 
         Log.d(TAG, "WakeLock acquired for alarm $alarmId")
 
-        // Register for auto-dismiss callback from service
-        AlarmRingingService.setOnAutoDismissListener { dismissedAlarmId ->
-            if (dismissedAlarmId == alarmId) {
-                Log.d(TAG, "Auto-dismiss callback received for alarm $alarmId, closing activity")
-                finish()
+        // Collect auto-dismiss events from the service SharedFlow.
+        // replay=1 means we get the last event even if we subscribe after it was emitted.
+        lifecycleScope.launch {
+            AlarmRingingService.autoDismissFlow.collect { dismissedAlarmId ->
+                if (dismissedAlarmId == alarmId) {
+                    Log.d(TAG, "Auto-dismiss received for alarm $alarmId, closing activity")
+                    finish()
+                }
             }
         }
-
 
         setContent {
             val darkMode by settingsRepository.darkMode.collectAsState(initial = "system")
@@ -90,10 +94,19 @@ class AlarmRingingActivity : ComponentActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // If the alarm is no longer ringing (e.g. auto-dismissed while screen was off),
+        // close this activity immediately.
+        val ringingId = AlarmRingingService.currentRingingAlarmId.value
+        if (ringingId != alarmId) {
+            Log.d(TAG, "onResume: alarm $alarmId is no longer ringing (current=$ringingId), finishing")
+            finish()
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        // Clear the listener when activity is destroyed
-        AlarmRingingService.setOnAutoDismissListener(null)
         // Release wakelock if still held
         wakeLock?.let {
             if (it.isHeld) {

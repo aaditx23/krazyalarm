@@ -35,6 +35,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -51,12 +57,13 @@ class AlarmRingingService : Service() {
         const val ACTION_AUTO_DISMISS = "com.aaditx23.krazyalarm.ACTION_AUTO_DISMISS"
         const val EXTRA_ALARM_ID = "alarm_id"
 
-        // Simple callback for Activity to listen for auto-dismiss
-        private var onAutoDismissListener: ((Long) -> Unit)? = null
+        // SharedFlow (replay=1) so Activity receives auto-dismiss even if it subscribes slightly late
+        private val _autoDismissFlow = MutableSharedFlow<Long>(replay = 1)
+        val autoDismissFlow: SharedFlow<Long> = _autoDismissFlow.asSharedFlow()
 
-        fun setOnAutoDismissListener(listener: ((Long) -> Unit)?) {
-            onAutoDismissListener = listener
-        }
+        // Tracks the alarm ID currently ringing (null when no alarm is active)
+        private val _currentRingingAlarmId = MutableStateFlow<Long?>(null)
+        val currentRingingAlarmId: StateFlow<Long?> = _currentRingingAlarmId.asStateFlow()
     }
 
     private val alarmRepository: AlarmRepository by inject()
@@ -128,9 +135,15 @@ class AlarmRingingService : Service() {
                 Log.d(TAG, "Alarm loaded: id=${alarm.id}, duration=${alarm.alarmDurationMinutes}min")
 
                 currentAlarm = alarm
+                _currentRingingAlarmId.value = alarm.id
 
-                // Start foreground service with notification
+                // Start foreground service with notification (fullScreenIntent handles lock-screen on most devices)
                 startForeground(NOTIFICATION_ID, createNotification(alarm))
+
+                // Also directly start the Activity so it shows over lock screen / when screen is off
+                // on devices where fullScreenIntent alone is not reliable
+                val activityIntent = AlarmRingingActivity.createIntent(this@AlarmRingingService, alarm.id)
+                startActivity(activityIntent)
 
                 // Start alarm components
                 startRingtone(alarm)
@@ -155,12 +168,12 @@ class AlarmRingingService : Service() {
             delay(durationMillis)
             Log.d(TAG, "Auto-dismissing alarm after ${alarm.alarmDurationMinutes} minutes")
 
-            // Notify Activity to close via callback
-            onAutoDismissListener?.invoke(alarm.id)
-            Log.d(TAG, "Auto-dismiss callback invoked for alarm ${alarm.id}")
+            // Emit to SharedFlow so the Activity (if alive) finishes itself
+            _autoDismissFlow.emit(alarm.id)
+            Log.d(TAG, "Auto-dismiss emitted for alarm ${alarm.id}")
 
-            // Small delay then dismiss
-            delay(100)
+            // Small delay to let Activity react, then dismiss service
+            delay(300)
             dismissAlarm()
         }
     }
@@ -478,6 +491,7 @@ class AlarmRingingService : Service() {
             Log.e(TAG, "dismissAlarm() called but currentAlarm is null!")
         }
 
+        _currentRingingAlarmId.value = null
         stopAllAlarmComponents()
 
         // Notify queue manager that this alarm finished
@@ -531,6 +545,7 @@ class AlarmRingingService : Service() {
         }
 
         val alarmId = currentAlarm?.id
+        _currentRingingAlarmId.value = null
         stopAllAlarmComponents()
 
         // Notify queue manager that this alarm finished
