@@ -8,12 +8,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.presentation.screen.settings.SettingsViewModel
 import com.aaditx23.krazyalarm.presentation.screen.settings.alarmscreencustomization.components.ButtonFlickerCard
 import com.aaditx23.krazyalarm.presentation.screen.settings.alarmscreencustomization.components.ButtonMotionSpeedCard
+import com.aaditx23.krazyalarm.presentation.screen.settings.components.SettingsNavigationCard
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -61,35 +61,12 @@ fun AlarmScreenCustomizationScreen(
             )
 
             // Preview Alarm Screen
-            Card(
-                modifier = Modifier.fillMaxWidth(),
+            SettingsNavigationCard(
+                title = "Preview Alarm Screen",
+                subtitle = "Preview the alarm ringing screen with current settings",
+                icon = Icons.Default.Alarm,
                 onClick = onTestAlarm
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Preview Alarm Screen",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Preview the alarm ringing screen with current settings",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Icon(
-                        imageVector = Icons.Default.Alarm,
-                        contentDescription = "Preview",
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            }
+            )
         }
     }
 }

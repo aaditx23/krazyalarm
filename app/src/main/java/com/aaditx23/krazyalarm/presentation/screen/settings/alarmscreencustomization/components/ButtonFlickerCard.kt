@@ -67,7 +67,7 @@ fun ButtonFlickerCard(
                 onExpandedChange = { expanded = !expanded }
             ) {
                 OutlinedTextField(
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(16.dp),
                     value = selectedLabel,
                     onValueChange = {},
                     readOnly = true,
