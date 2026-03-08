@@ -3,7 +3,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aaditx23.krazyalarm.domain.models.Alarm
 import com.aaditx23.krazyalarm.domain.models.AlarmInput
-import com.aaditx23.krazyalarm.domain.usecase.CreateAlarmUseCase
+import com.aaditx23.krazyalarm.domain.repository.AlarmRepository
+import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
 import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmsUseCase
@@ -22,7 +23,8 @@ class AlarmListViewModel(
     private val getAlarmsUseCase: GetAlarmsUseCase,
     private val toggleAlarmUseCase: ToggleAlarmUseCase,
     private val deleteAlarmUseCase: DeleteAlarmUseCase,
-    private val createAlarmUseCase: CreateAlarmUseCase,
+    private val alarmRepository: AlarmRepository,
+    private val alarmScheduler: AlarmScheduler,
     private val getAlarmByIdUseCase: GetAlarmByIdUseCase,
     private val updateAlarmUseCase: UpdateAlarmUseCase
 ) : ViewModel() {
@@ -83,24 +85,16 @@ class AlarmListViewModel(
         }
     }
 
-    /** Re-create the alarm that was just swipe-deleted (undo). */
+    /** Re-inserts the exact alarm that was swipe-deleted (same id, same data, same schedule). */
     fun undoDelete(alarm: Alarm) {
         viewModelScope.launch {
-            val input = AlarmInput(
-                hour = alarm.hour,
-                minute = alarm.minute,
-                days = alarm.days,
-                enabled = alarm.enabled,
-                label = alarm.label,
-                ringtoneUri = alarm.ringtoneUri,
-                flashPatternId = alarm.flashPatternId,
-                vibrationPatternId = alarm.vibrationPatternId,
-                vibrationIntensity = alarm.vibrationIntensity,
-                snoozeDurationMinutes = alarm.snoozeDurationMinutes,
-                alarmDurationMinutes = alarm.alarmDurationMinutes,
-                scheduledDate = alarm.scheduledDate
-            )
-            createAlarmUseCase(input)
+            alarmRepository.restoreAlarm(alarm)
+                .onSuccess {
+                    // Re-schedule if the alarm was enabled
+                    if (alarm.enabled) {
+                        alarmScheduler.scheduleAlarm(alarm)
+                    }
+                }
                 .onFailure {
                     _uiEvents.value = UiEvent.Error("Failed to restore alarm")
                 }

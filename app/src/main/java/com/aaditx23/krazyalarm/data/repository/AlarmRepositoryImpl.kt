@@ -63,6 +63,17 @@ class AlarmRepositoryImpl(
         }
     }
 
+    override suspend fun restoreAlarm(alarm: Alarm): Result<Unit> {
+        return try {
+            // Insert with the original id — REPLACE strategy means it's an exact restore
+            val entity = alarm.toEntity()
+            alarmDao.insert(entity)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun deleteAlarm(id: Long): Result<Unit> {
         return try {
             alarmDao.deleteById(id)
