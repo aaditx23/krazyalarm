@@ -64,6 +64,18 @@ class AlarmRingingService : Service() {
         // Tracks the alarm ID currently ringing (null when no alarm is active)
         private val _currentRingingAlarmId = MutableStateFlow<Long?>(null)
         val currentRingingAlarmId: StateFlow<Long?> = _currentRingingAlarmId.asStateFlow()
+
+        /**
+         * Calculate LoudnessEnhancer gain in millibels for a given volume percentage.
+         * Returns 0 for ≤100% (system volume handles it), positive boost for >100%.
+         * Capped at 6000 mB (+60 dB) to support up to ~200%.
+         */
+        fun calculateGainMillibels(volumePercent: Int): Int {
+            if (volumePercent <= 100) return 0
+            val ratio = volumePercent / 100.0
+            val decibels = 20 * kotlin.math.log10(ratio)
+            return (decibels * 100).toInt().coerceIn(0, 6000)
+        }
     }
 
     private val alarmRepository: AlarmRepository by inject()
@@ -296,28 +308,23 @@ class AlarmRingingService : Service() {
                 )
 
                 prepare()
-
-                // Use LoudnessEnhancer for real volume boost
-                if (volume > 100) {
-                    try {
-                        loudnessEnhancer = LoudnessEnhancer(audioSessionId).apply {
-                            // Calculate gain in millibels
-                            val ratio = volume / 100.0
-                            val decibels = 20 * kotlin.math.log10(ratio)
-                            val millibels = (decibels * 100).toInt().coerceIn(0, 3000)
-
-                            Log.d(TAG, "LoudnessEnhancer: $volume% = +${millibels}mB (+${millibels/100}dB)")
-                            setTargetGain(millibels)
-                            enabled = true
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to apply LoudnessEnhancer", e)
-                    }
-                }
-
                 isLooping = true
                 start()
             }
+
+                // Attach LoudnessEnhancer AFTER mediaPlayer is assigned so that
+                // stopAllAlarmComponents() can always find and release it correctly.
+                // Apply for any volume (0 gain at 100%, boost above 100%).
+                try {
+                    val gainMillibels = calculateGainMillibels(volume)
+                    loudnessEnhancer = LoudnessEnhancer(mediaPlayer!!.audioSessionId).apply {
+                        setTargetGain(gainMillibels)
+                        enabled = true
+                    }
+                    Log.d(TAG, "LoudnessEnhancer: $volume% = +${gainMillibels}mB (+${gainMillibels / 100}dB)")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to apply LoudnessEnhancer", e)
+                }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start ringtone completely", e)
             // Still stop the service if we absolutely can't play any sound
