@@ -2,16 +2,14 @@ package com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,6 +24,8 @@ import java.util.Locale
 fun TimeDisplaySection(
     hour: Int,
     minute: Int,
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
     onTimeClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -34,14 +34,13 @@ fun TimeDisplaySection(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Time Display
+        // Time Display — tappable to open time picker
         Row(
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onTimeClick)
         ) {
-            // Convert 24h to 12h format
             val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
             val amPm = if (hour < 12) "am" else "pm"
 
@@ -64,17 +63,11 @@ fun TimeDisplaySection(
             )
         }
 
-        // Edit Button
-        FilledTonalButton(
-            onClick = onTimeClick,
-            shape = RoundedCornerShape(24.dp),
-            colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            contentPadding = PaddingValues(12.dp)
-        ) {
-            Text("Edit", fontSize = 14.sp, fontWeight = FontWeight.Normal)
-        }
+        // Enable / Disable toggle
+        Switch(
+            checked = enabled,
+            onCheckedChange = onEnabledChange
+        )
     }
 }
+

@@ -73,10 +73,12 @@ fun DetailsModalContent(
         // Top spacing
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Time Display Section with Edit Button
+        // Time Display Section with Toggle
         TimeDisplaySection(
             hour = state.hour,
             minute = state.minute,
+            enabled = state.enabled,
+            onEnabledChange = viewModel::updateEnabled,
             onTimeClick = onTimeClick,
             modifier = Modifier.padding(horizontal = 24.dp)
         )
