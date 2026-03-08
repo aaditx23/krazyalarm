@@ -2,6 +2,7 @@ package com.aaditx23.krazyalarm.presentation.screen.permissions
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -13,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,12 +30,97 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.aaditx23.krazyalarm.data.util.PermissionUtils
 
+// ---------------------------------------------------------------------------
+// OEM helpers
+// ---------------------------------------------------------------------------
+
+private enum class OemType { MIUI, SAMSUNG, REALME_COLOROS, HUAWEI_EMUI, OTHER }
+
+private fun detectOem(): OemType {
+    val manufacturer = Build.MANUFACTURER.lowercase()
+    val brand = Build.BRAND.lowercase()
+    return when {
+        manufacturer.contains("xiaomi") || brand.contains("xiaomi") ||
+        brand.contains("redmi") || brand.contains("poco") -> OemType.MIUI
+        manufacturer.contains("samsung") -> OemType.SAMSUNG
+        manufacturer.contains("realme") || manufacturer.contains("oppo") ||
+        brand.contains("realme") || brand.contains("oppo") -> OemType.REALME_COLOROS
+        manufacturer.contains("huawei") || manufacturer.contains("honor") -> OemType.HUAWEI_EMUI
+        else -> OemType.OTHER
+    }
+}
+
+private data class OemAlarmInfo(
+    val extraDescription: String,
+    val buttonLabel: String,
+    /** Returns null if the intent cannot be constructed on this device */
+    val buildIntent: (packageName: String, pm: PackageManager) -> Intent?
+)
+
+private fun getOemAlarmInfo(oem: OemType): OemAlarmInfo? = when (oem) {
+    OemType.MIUI -> OemAlarmInfo(
+        extraDescription = "On Xiaomi/MIUI devices you also need to enable \"Autostart\" and allow background activity in the MIUI Security app.",
+        buttonLabel = "Open MIUI Permissions",
+        buildIntent = { pkg, pm ->
+            val miuiIntent = Intent("miui.intent.action.APP_PERM_EDITOR").apply {
+                setClassName(
+                    "com.miui.securitycenter",
+                    "com.miui.permcenter.autostart.AutoStartManagementActivity"
+                )
+            }
+            val canResolveMiui = try {
+                pm.resolveActivity(miuiIntent, PackageManager.MATCH_DEFAULT_ONLY) != null
+            } catch (_: Exception) { false }
+
+            if (canResolveMiui) miuiIntent
+            else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$pkg")
+            }
+        }
+    )
+    OemType.SAMSUNG -> OemAlarmInfo(
+        extraDescription = "On Samsung devices, also make sure \"Allow background activity\" is enabled in Battery settings for this app.",
+        buttonLabel = "Open Battery Settings",
+        buildIntent = { pkg, _ ->
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$pkg")
+            }
+        }
+    )
+    OemType.REALME_COLOROS -> OemAlarmInfo(
+        extraDescription = "On Realme/OPPO devices, enable \"Autostart\" in Phone Manager → Privacy → Startup Manager.",
+        buttonLabel = "Open App Settings",
+        buildIntent = { pkg, _ ->
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$pkg")
+            }
+        }
+    )
+    OemType.HUAWEI_EMUI -> OemAlarmInfo(
+        extraDescription = "On Huawei/Honor devices, enable \"Auto-launch\" in Phone Manager → App Launch.",
+        buttonLabel = "Open App Settings",
+        buildIntent = { pkg, _ ->
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = Uri.parse("package:$pkg")
+            }
+        }
+    )
+    OemType.OTHER -> null
+}
+
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
+
 @Composable
 fun PermissionsScreen(
     onPermissionsGranted: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val oem = remember { detectOem() }
+    val oemAlarmInfo = remember(oem) { getOemAlarmInfo(oem) }
 
     var notificationPermissionGranted by remember {
         mutableStateOf(PermissionUtils.hasNotificationPermission(context))
@@ -155,70 +242,79 @@ fun PermissionsScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Notification Permission Card
-            PermissionCard(
-                icon = Icons.Default.Notifications,
-                title = "Notification Permission",
-                description = "Required to show alarm notifications and alert you when alarms ring",
-                isGranted = notificationPermissionGranted,
-                onRequestClick = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        if (!notificationPermissionGranted) {
-                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }
-                    }
-                },
-                onOpenSettings = {
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                        data = Uri.parse("package:${context.packageName}")
-                    }
-                    settingsLauncher.launch(intent)
-                },
-                showRationale = showNotificationRationale
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-            PermissionCard(
-                icon = Icons.Default.FlashOn,
-                title = "Camera Permission",
-                description = "Required to use LED flash patterns as visual alerts when alarms ring",
-                isGranted = cameraPermissionGranted,
-                onRequestClick = {
-                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                },
-                onOpenSettings = {
-                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                        data = Uri.parse("package:${context.packageName}")
-                    }
-                    settingsLauncher.launch(intent)
-                },
-                showRationale = showCameraRationale
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            // Alarm Permission Card
+            // Alarm Permission Card — always shown first
             PermissionCard(
                 icon = Icons.Default.Schedule,
                 title = "Exact Alarm Permission",
                 description = "Required to schedule alarms at precise times and ensure they ring exactly when you need them",
                 isGranted = alarmPermissionGranted,
                 onRequestClick = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-                            data = Uri.parse("package:${context.packageName}")
-                        }
-                        settingsLauncher.launch(intent)
+                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.parse("package:${context.packageName}")
                     }
+                    settingsLauncher.launch(intent)
                 },
                 onOpenSettings = {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.parse("package:${context.packageName}")
+                    }
+                    settingsLauncher.launch(intent)
+                },
+                showRationale = false,
+                oemExtraInfo = oemAlarmInfo?.let { info ->
+                    OemExtraInfo(
+                        message = info.extraDescription,
+                        buttonLabel = info.buttonLabel,
+                        onButtonClick = {
+                            val intent = info.buildIntent(context.packageName, context.packageManager)
+                            if (intent != null) settingsLauncher.launch(intent)
+                        }
+                    )
+                }
+            )
+
+            // Notification and Camera cards only appear after alarm permission is granted
+            if (alarmPermissionGranted) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                PermissionCard(
+                    icon = Icons.Default.Notifications,
+                    title = "Notification Permission",
+                    description = "Required to show alarm notifications and alert you when alarms ring",
+                    isGranted = notificationPermissionGranted,
+                    onRequestClick = {
+                        if (!notificationPermissionGranted) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    },
+                    onOpenSettings = {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                             data = Uri.parse("package:${context.packageName}")
                         }
                         settingsLauncher.launch(intent)
-                    }
-                },
-                showRationale = false
-            )
+                    },
+                    showRationale = showNotificationRationale
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                PermissionCard(
+                    icon = Icons.Default.FlashOn,
+                    title = "Camera Permission",
+                    description = "Required to use LED flash patterns as visual alerts when alarms ring",
+                    isGranted = cameraPermissionGranted,
+                    onRequestClick = {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    },
+                    onOpenSettings = {
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                            data = Uri.parse("package:${context.packageName}")
+                        }
+                        settingsLauncher.launch(intent)
+                    },
+                    showRationale = showCameraRationale
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -259,6 +355,20 @@ fun PermissionsScreen(
     }
 }
 
+// ---------------------------------------------------------------------------
+// OEM extra info data class
+// ---------------------------------------------------------------------------
+
+data class OemExtraInfo(
+    val message: String,
+    val buttonLabel: String,
+    val onButtonClick: () -> Unit
+)
+
+// ---------------------------------------------------------------------------
+// Permission Card
+// ---------------------------------------------------------------------------
+
 @Composable
 fun PermissionCard(
     icon: ImageVector,
@@ -267,7 +377,8 @@ fun PermissionCard(
     isGranted: Boolean,
     onRequestClick: () -> Unit,
     onOpenSettings: () -> Unit,
-    showRationale: Boolean
+    showRationale: Boolean,
+    oemExtraInfo: OemExtraInfo? = null
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -279,9 +390,7 @@ fun PermissionCard(
                 MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -348,6 +457,46 @@ fun PermissionCard(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text("Grant Permission")
+                    }
+                }
+
+                // OEM-specific extra guidance shown below the main button
+                if (oemExtraInfo != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(verticalAlignment = Alignment.Top) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp).padding(top = 2.dp),
+                            tint = MaterialTheme.colorScheme.tertiary
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = oemExtraInfo.message,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    OutlinedButton(
+                        onClick = oemExtraInfo.onButtonClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(oemExtraInfo.buttonLabel)
                     }
                 }
             }

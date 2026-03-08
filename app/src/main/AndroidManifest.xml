@@ -20,6 +20,11 @@
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
     <uses-feature android:name="android.hardware.vibrator" android:required="false" />
 
+    <queries>
+        <!-- Required to resolve MIUI Security Center for autostart permission guidance -->
+        <package android:name="com.miui.securitycenter" />
+    </queries>
+
     <application
         android:name=".KrazyAlarmApplication"
         android:allowBackup="true"
