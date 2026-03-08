@@ -1,17 +1,12 @@
 package com.aaditx23.krazyalarm.presentation.screen.alarm_list
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -23,19 +18,15 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,10 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.aaditx23.krazyalarm.presentation.components.EmptyState
@@ -154,98 +142,30 @@ fun AlarmListScreen(
                             items = uiState.alarms,
                             key = { it.id }
                         ) { alarm ->
-                            val dismissState = rememberSwipeToDismissBoxState(
-                                confirmValueChange = { value ->
-                                    if (!uiState.isSelectMode &&
-                                        (value == SwipeToDismissBoxValue.EndToStart ||
-                                         value == SwipeToDismissBoxValue.StartToEnd)
-                                    ) {
-                                        viewModel.swipeDeleteAlarm(alarm)
-                                        true
-                                    } else {
-                                        false
-                                    }
-                                },
-                                positionalThreshold = { totalDistance -> totalDistance * 0.35f }
-                            )
-
-                            SwipeToDismissBox(
-                                state = dismissState,
+                            AlarmItemCard(
+                                alarm = alarm,
+                                nowMillis = nowMillis,
+                                isSelectMode = uiState.isSelectMode,
+                                isSelected = uiState.selectedAlarms.contains(alarm.id),
                                 modifier = Modifier.animateItem(),
-                                enableDismissFromStartToEnd = !uiState.isSelectMode,
-                                enableDismissFromEndToStart = !uiState.isSelectMode,
-                                backgroundContent = {
-                                    val progress = dismissState.progress
-                                    val isEndToStart = dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart
-                                    val triggered =
-                                        dismissState.targetValue == SwipeToDismissBoxValue.EndToStart ||
-                                        dismissState.targetValue == SwipeToDismissBoxValue.StartToEnd
-
-                                    val bgColor by animateColorAsState(
-                                        targetValue = if (triggered)
-                                            MaterialTheme.colorScheme.errorContainer
-                                        else
-                                            MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f),
-                                        label = "swipeBg"
-                                    )
-                                    val scale by animateFloatAsState(
-                                        targetValue = if (triggered) 1.15f else 0.85f + (progress * 0.3f),
-                                        label = "iconScale"
-                                    )
-
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(bgColor)
-                                            .padding(
-                                                start = if (!isEndToStart) 24.dp else 0.dp,
-                                                end = if (isEndToStart) 24.dp else 0.dp
-                                            ),
-                                        contentAlignment = if (isEndToStart) Alignment.CenterEnd else Alignment.CenterStart
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Delete alarm",
-                                            tint = MaterialTheme.colorScheme.onErrorContainer,
-                                            modifier = Modifier
-                                                .size(28.dp)
-                                                .scale(scale)
-                                        )
-                                    }
+                                onToggle = { enabled ->
+                                    if (!uiState.isSelectMode) viewModel.toggleAlarm(alarm.id, enabled)
+                                },
+                                onEdit = {
+                                    if (!uiState.isSelectMode) viewModel.openEditAlarmSheet(alarm.id)
+                                },
+                                onLongClick = {
+                                    if (!uiState.isSelectMode) viewModel.toggleSelectModeAndSelect(alarm.id)
+                                },
+                                onSelect = {
+                                    if (uiState.isSelectMode) viewModel.toggleAlarmSelection(alarm.id)
+                                },
+                                onDelete = { viewModel.deleteAlarm(alarm.id) },
+                                onSwipeDelete = { viewModel.swipeDeleteAlarm(alarm) },
+                                onTimeChange = { hour, minute ->
+                                    viewModel.updateAlarmTime(alarm.id, hour, minute)
                                 }
-                            ) {
-                                AlarmItemCard(
-                                    alarm = alarm,
-                                    nowMillis = nowMillis,
-                                    isSelectMode = uiState.isSelectMode,
-                                    isSelected = uiState.selectedAlarms.contains(alarm.id),
-                                    onToggle = { enabled ->
-                                        if (!uiState.isSelectMode) {
-                                            viewModel.toggleAlarm(alarm.id, enabled)
-                                        }
-                                    },
-                                    onEdit = {
-                                        if (!uiState.isSelectMode) {
-                                            viewModel.openEditAlarmSheet(alarm.id)
-                                        }
-                                    },
-                                    onLongClick = {
-                                        if (!uiState.isSelectMode) {
-                                            viewModel.toggleSelectModeAndSelect(alarm.id)
-                                        }
-                                    },
-                                    onSelect = {
-                                        if (uiState.isSelectMode) {
-                                            viewModel.toggleAlarmSelection(alarm.id)
-                                        }
-                                    },
-                                    onDelete = { viewModel.deleteAlarm(alarm.id) },
-                                    onTimeChange = { hour, minute ->
-                                        viewModel.updateAlarmTime(alarm.id, hour, minute)
-                                    }
-                                )
-                            }
+                            )
                         }
                     }
                 }

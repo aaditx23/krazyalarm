@@ -62,7 +62,7 @@ fun AlarmDurationCard(
             ) {
                 OutlinedTextField(
                     value = "$durationMinutes ${if (durationMinutes == 1) "minute" else "minutes"}",
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     onValueChange = {},
                     readOnly = true,
                     label = { Text("Duration") },

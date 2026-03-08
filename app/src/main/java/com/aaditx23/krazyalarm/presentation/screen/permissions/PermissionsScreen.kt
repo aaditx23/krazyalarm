@@ -325,7 +325,7 @@ fun PermissionsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(24.dp)
                 ) {
                     Text(
                         text = "Get Started",

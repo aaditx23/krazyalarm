@@ -37,7 +37,7 @@ fun VibrationPatternCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
-        shape = RoundedCornerShape(topEnd = 4.dp, topStart = 4.dp, bottomStart = 12.dp, bottomEnd = 12.dp)
+        shape = RoundedCornerShape(topEnd = 4.dp, topStart = 4.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
     ) {
         Row(
             modifier = Modifier
