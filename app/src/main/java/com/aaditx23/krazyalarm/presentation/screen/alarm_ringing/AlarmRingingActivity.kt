@@ -53,6 +53,15 @@ class AlarmRingingActivity : ComponentActivity() {
         setShowWhenLocked(true)
         setTurnScreenOn(true)
 
+        // Additional window flags for lock screen display (for better compatibility)
+        @Suppress("DEPRECATION")
+        window.addFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+            android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+            android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+            android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+        )
+
         // Acquire a wakelock so the CPU + screen stay on while the alarm is ringing
         val powerManager = getSystemService(PowerManager::class.java)
         @Suppress("DEPRECATION", "WakelockTimeout")

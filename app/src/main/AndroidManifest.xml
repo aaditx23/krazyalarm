@@ -10,10 +10,12 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_ALARM" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.TURN_SCREEN_ON" />
+    <uses-permission android:name="android.permission.SHOW_WHEN_LOCKED" />
 
     <!-- Features -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -55,6 +57,7 @@
             android:exported="false"
             android:launchMode="singleInstance"
             android:showWhenLocked="true"
+            android:showOnLockScreen="true"
             android:turnScreenOn="true"
             android:excludeFromRecents="true"
             android:theme="@style/Theme.KrazyAlarm" />
@@ -63,7 +66,7 @@
         <service
             android:name=".data.scheduler.AlarmRingingService"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
+            android:foregroundServiceType="mediaPlayback|specialUse" />
 
         <!-- Alarm Receiver -->
         <receiver

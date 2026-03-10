@@ -150,7 +150,16 @@ class AlarmRingingService : Service() {
                 _currentRingingAlarmId.value = alarm.id
 
                 // Start foreground service with notification (fullScreenIntent handles lock-screen on most devices)
-                startForeground(NOTIFICATION_ID, createNotification(alarm))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    startForeground(
+                        NOTIFICATION_ID,
+                        createNotification(alarm),
+                        android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK or
+                        android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                    )
+                } else {
+                    startForeground(NOTIFICATION_ID, createNotification(alarm))
+                }
 
                 // Also directly start the Activity so it shows over lock screen / when screen is off
                 // on devices where fullScreenIntent alone is not reliable
@@ -208,17 +217,37 @@ class AlarmRingingService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        // Check if we have permission to use full screen intent
+        val canUseFullScreen = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            val canUse = notificationManager.canUseFullScreenIntent()
+            if (!canUse) {
+                Log.w(TAG, "USE_FULL_SCREEN_INTENT permission not granted - alarm may not show on lock screen!")
+            }
+            canUse
+        } else {
+            true
+        }
+
+        val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_icon)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(alarm.label ?: "Alarm")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
             .setContentIntent(viewPendingIntent)
             .addAction(R.drawable.ic_launcher_foreground, "View", viewPendingIntent)
             .setOngoing(true)
-            .build()
+            .setAutoCancel(false)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setDefaults(0) // No defaults, we handle sound/vibration ourselves
+
+        // Only set full screen intent if we have permission (or on older Android versions)
+        if (canUseFullScreen) {
+            builder.setFullScreenIntent(fullScreenPendingIntent, true)
+        }
+
+        return builder.build()
     }
 
     private fun startRingtone(alarm: Alarm) {
@@ -603,6 +632,8 @@ class AlarmRingingService : Service() {
                 description = "Notifications for alarm alerts"
                 setSound(null, null) // Don't play sound through notification
                 enableVibration(false) // Don't vibrate through notification
+                setBypassDnd(true) // Allow alarm to bypass Do Not Disturb
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC // Show on lock screen
             }
 
             val notificationManager = getSystemService(NotificationManager::class.java)

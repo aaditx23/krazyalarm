@@ -78,6 +78,28 @@
 # AlarmRingingViewModel constructor (Koin parametersOf passes alarmId)
 -keep class com.aaditx23.krazyalarm.presentation.screen.alarm_ringing.AlarmRingingViewModel { <init>(...); *; }
 
+# Preserve lock screen methods - critical for showing activity over lock screen
+-keepclassmembers class * extends android.app.Activity {
+    public void setShowWhenLocked(boolean);
+    public void setTurnScreenOn(boolean);
+    public void setInheritShowWhenLocked(boolean);
+}
+
+# Preserve window flag methods used for lock screen display
+-keepclassmembers class android.view.Window {
+    public void addFlags(int);
+    public void clearFlags(int);
+}
+
+# Preserve NotificationManager methods for full screen intent checks
+-keepclassmembers class android.app.NotificationManager {
+    public boolean canUseFullScreenIntent();
+}
+
+# Preserve PowerManager and WakeLock for keeping screen on
+-keep class android.os.PowerManager { *; }
+-keep class android.os.PowerManager$WakeLock { *; }
+
 # ================================================================================================
 # Reflection attributes for DI and Room
 # ================================================================================================

@@ -133,6 +133,9 @@ fun PermissionsScreen(
             context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED
         )
     }
+    var fullScreenIntentGranted by remember {
+        mutableStateOf(PermissionUtils.canUseFullScreenIntent(context))
+    }
 
     // Check if we should show rationale for notification permission
     var showNotificationRationale by remember { mutableStateOf(false) }
@@ -166,6 +169,7 @@ fun PermissionsScreen(
         notificationPermissionGranted = PermissionUtils.hasNotificationPermission(context)
         alarmPermissionGranted = PermissionUtils.canScheduleExactAlarms(context)
         cameraPermissionGranted = context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        fullScreenIntentGranted = PermissionUtils.canUseFullScreenIntent(context)
     }
 
     // Check permissions when screen first appears
@@ -173,6 +177,7 @@ fun PermissionsScreen(
         notificationPermissionGranted = PermissionUtils.hasNotificationPermission(context)
         alarmPermissionGranted = PermissionUtils.canScheduleExactAlarms(context)
         cameraPermissionGranted = context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        fullScreenIntentGranted = PermissionUtils.canUseFullScreenIntent(context)
     }
 
     // Recheck permissions when app comes to foreground
@@ -182,6 +187,7 @@ fun PermissionsScreen(
                 notificationPermissionGranted = PermissionUtils.hasNotificationPermission(context)
                 alarmPermissionGranted = PermissionUtils.canScheduleExactAlarms(context)
                 cameraPermissionGranted = context.checkSelfPermission(Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                fullScreenIntentGranted = PermissionUtils.canUseFullScreenIntent(context)
             }
         }
 
@@ -193,8 +199,8 @@ fun PermissionsScreen(
     }
 
     // Auto-navigate when all permissions are granted
-    LaunchedEffect(notificationPermissionGranted, alarmPermissionGranted, cameraPermissionGranted) {
-        if (notificationPermissionGranted && alarmPermissionGranted && cameraPermissionGranted) {
+    LaunchedEffect(notificationPermissionGranted, alarmPermissionGranted, cameraPermissionGranted, fullScreenIntentGranted) {
+        if (notificationPermissionGranted && alarmPermissionGranted && cameraPermissionGranted && fullScreenIntentGranted) {
             onPermissionsGranted()
         }
     }
@@ -298,6 +304,25 @@ fun PermissionsScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Full Screen Intent Permission (Android 14+)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && notificationPermissionGranted) {
+                    PermissionCard(
+                        icon = Icons.Default.PhoneAndroid,
+                        title = "Full Screen Alarm Permission",
+                        description = "Required to show alarms on your lock screen when the phone is locked. This ensures you never miss an alarm.",
+                        isGranted = fullScreenIntentGranted,
+                        onRequestClick = {
+                            PermissionUtils.openFullScreenIntentSettings(context)
+                        },
+                        onOpenSettings = {
+                            PermissionUtils.openFullScreenIntentSettings(context)
+                        },
+                        showRationale = false
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 PermissionCard(
                     icon = Icons.Default.FlashOn,
                     title = "Camera Permission",
@@ -319,7 +344,7 @@ fun PermissionsScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Continue button - only shown when all permissions are granted
-            if (notificationPermissionGranted && alarmPermissionGranted && cameraPermissionGranted) {
+            if (notificationPermissionGranted && alarmPermissionGranted && cameraPermissionGranted && fullScreenIntentGranted) {
                 Button(
                     onClick = onPermissionsGranted,
                     modifier = Modifier

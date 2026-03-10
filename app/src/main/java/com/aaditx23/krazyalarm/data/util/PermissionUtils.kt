@@ -83,4 +83,24 @@ object PermissionUtils {
     fun hasFlash(context: Context): Boolean {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH)
     }
+
+    // Check if app can use full screen intent (Android 14+)
+    fun canUseFullScreenIntent(context: Context): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            notificationManager.canUseFullScreenIntent()
+        } else {
+            true // Not required for older versions
+        }
+    }
+
+    // Open settings to grant full screen intent permission
+    fun openFullScreenIntentSettings(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+                data = Uri.parse("package:${context.packageName}")
+            }
+            context.startActivity(intent)
+        }
+    }
 }
