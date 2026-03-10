@@ -200,27 +200,11 @@ class AlarmRingingService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val dismissIntent = Intent(this, AlarmRingingService::class.java).apply {
-            action = ACTION_DISMISS
-            putExtra(EXTRA_ALARM_ID, alarm.id)
-        }
-
-        val dismissPendingIntent = PendingIntent.getService(
+        // Content tap also opens the alarm screen
+        val viewPendingIntent = PendingIntent.getActivity(
             this,
             1,
-            dismissIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val snoozeIntent = Intent(this, AlarmRingingService::class.java).apply {
-            action = ACTION_SNOOZE
-            putExtra(EXTRA_ALARM_ID, alarm.id)
-        }
-
-        val snoozePendingIntent = PendingIntent.getService(
-            this,
-            2,
-            snoozeIntent,
+            fullScreenIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -231,8 +215,8 @@ class AlarmRingingService : Service() {
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setFullScreenIntent(fullScreenPendingIntent, true)
-            .addAction(R.drawable.ic_launcher_foreground, "Dismiss", dismissPendingIntent)
-            .addAction(R.drawable.ic_launcher_foreground, "Snooze", snoozePendingIntent)
+            .setContentIntent(viewPendingIntent)
+            .addAction(R.drawable.ic_launcher_foreground, "View", viewPendingIntent)
             .setOngoing(true)
             .build()
     }

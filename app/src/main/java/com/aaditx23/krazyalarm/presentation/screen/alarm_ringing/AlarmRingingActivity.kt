@@ -96,6 +96,9 @@ class AlarmRingingActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Preview mode (alarmId == -1) has no backing service — skip the ringing check.
+        if (alarmId == -1L) return
+
         // If the alarm is no longer ringing (e.g. auto-dismissed while screen was off),
         // close this activity immediately.
         val ringingId = AlarmRingingService.currentRingingAlarmId.value
@@ -118,6 +121,7 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private fun handleDismiss() {
+        if (alarmId == -1L) { finish(); return }
         // Send dismiss action to service
         val dismissIntent = Intent(this, AlarmRingingService::class.java).apply {
             action = AlarmRingingService.ACTION_DISMISS
@@ -128,6 +132,7 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private fun handleSnooze() {
+        if (alarmId == -1L) { finish(); return }
         // Send snooze action to service
         val snoozeIntent = Intent(this, AlarmRingingService::class.java).apply {
             action = AlarmRingingService.ACTION_SNOOZE
