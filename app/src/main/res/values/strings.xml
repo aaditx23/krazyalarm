@@ -1,9 +1,7 @@
 <resources>
     <string name="app_name">Krazy Alarm</string>
     <string name="widget_digital_name">Krazy Digital Clock</string>
-    <string name="widget_analog_name">Krazy Analog Clock</string>
     <string name="widget_digital_description">Digital clock with next upcoming alarm</string>
-    <string name="widget_analog_description">Analog clock with next upcoming alarm</string>
     <string name="widget_no_upcoming_alarm">No upcoming alarm</string>
     <string name="widget_upcoming_alarm_placeholder">Wed 7:20 AM</string>
     <string name="widget_alarm_icon_content_description">Alarm</string>

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/widget_root"
+    android:id="@+id/widget_root_preview"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="6dp"
-    android:background="@android:color/transparent">
+    android:padding="12dp"
+    android:background="@drawable/widget_digital_preview_pill_bg">
 
     <TextClock
-        android:id="@+id/widget_date"
+        android:id="@+id/widget_date_preview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:format12Hour="EEE, MMM d"
@@ -19,7 +19,7 @@
         android:textSize="16sp" />
 
     <TextClock
-        android:id="@+id/widget_hour"
+        android:id="@+id/widget_hour_preview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="-4dp"
@@ -31,7 +31,7 @@
         android:letterSpacing="0" />
 
     <TextClock
-        android:id="@+id/widget_minute"
+        android:id="@+id/widget_minute_preview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="-30dp"
@@ -43,7 +43,7 @@
         android:textSize="84sp" />
 
     <LinearLayout
-        android:id="@+id/widget_next_alarm_row"
+        android:id="@+id/widget_next_alarm_row_preview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="-4dp"
@@ -51,7 +51,7 @@
         android:gravity="center_vertical">
 
         <ImageView
-            android:id="@+id/widget_alarm_icon"
+            android:id="@+id/widget_alarm_icon_preview"
             android:layout_width="20dp"
             android:layout_height="20dp"
             android:contentDescription="@string/widget_alarm_icon_content_description"
@@ -59,7 +59,7 @@
             app:tint="@android:color/system_neutral1_0" />
 
         <TextView
-            android:id="@+id/widget_next_alarm_text"
+            android:id="@+id/widget_next_alarm_text_preview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"

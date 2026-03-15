@@ -6,7 +6,8 @@
     android:minHeight="100dp"
     android:targetCellWidth="2"
     android:targetCellHeight="2"
-    android:previewImage="@mipmap/ic_launcher"
+    android:previewImage="@drawable/widget_digital_preview"
+    android:previewLayout="@layout/widget_digital_clock_preview"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
     android:widgetCategory="home_screen" />

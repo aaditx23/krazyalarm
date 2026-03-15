@@ -33,13 +33,6 @@ object AlarmWidgetUpdater : KoinComponent {
         if (digitalWidgetIds.isNotEmpty()) {
             updateDigitalWidgets(context, appWidgetManager, digitalWidgetIds)
         }
-
-        val analogWidgetIds = appWidgetManager.getAppWidgetIds(
-            ComponentName(context, AnalogClockWidgetProvider::class.java)
-        )
-        if (analogWidgetIds.isNotEmpty()) {
-            updateAnalogWidgets(context, appWidgetManager, analogWidgetIds)
-        }
     }
 
     fun updateDigitalWidgets(
@@ -55,18 +48,6 @@ object AlarmWidgetUpdater : KoinComponent {
         )
     }
 
-    fun updateAnalogWidgets(
-        context: Context,
-        appWidgetManager: AppWidgetManager,
-        appWidgetIds: IntArray
-    ) {
-        updateWidgets(
-            context = context,
-            appWidgetManager = appWidgetManager,
-            appWidgetIds = appWidgetIds,
-            layoutId = R.layout.widget_analog_clock
-        )
-    }
 
     private fun updateWidgets(
         context: Context,
