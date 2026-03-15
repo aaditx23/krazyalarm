@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.view.View
 import android.widget.RemoteViews
 import com.aaditx23.krazyalarm.MainActivity
 import com.aaditx23.krazyalarm.R
@@ -74,12 +75,18 @@ object AlarmWidgetUpdater : KoinComponent {
         layoutId: Int
     ) {
         CoroutineScope(Dispatchers.IO).launch {
-            val nextAlarmText = buildNextAlarmText(context)
+            val nextAlarmText = buildNextAlarmText()
             val clickPendingIntent = createOpenAppPendingIntent(context)
+            val hasUpcomingAlarm = !nextAlarmText.isNullOrEmpty()
 
             appWidgetIds.forEach { appWidgetId ->
                 val views = RemoteViews(context.packageName, layoutId).apply {
-                    setTextViewText(R.id.widget_next_alarm_text, nextAlarmText)
+                    if (hasUpcomingAlarm) {
+                        setTextViewText(R.id.widget_next_alarm_text, nextAlarmText)
+                        setViewVisibility(R.id.widget_next_alarm_row, View.VISIBLE)
+                    } else {
+                        setViewVisibility(R.id.widget_next_alarm_row, View.GONE)
+                    }
                     setOnClickPendingIntent(R.id.widget_root, clickPendingIntent)
                 }
                 appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -87,10 +94,10 @@ object AlarmWidgetUpdater : KoinComponent {
         }
     }
 
-    private suspend fun buildNextAlarmText(context: Context): String {
+    private suspend fun buildNextAlarmText(): String? {
         val enabledAlarms = alarmRepository.getEnabledAlarms()
         val nextAlarm = enabledAlarms.minByOrNull { AlarmTimeCalculator.getNextTriggerTime(it) }
-            ?: return context.getString(R.string.widget_no_upcoming_alarm)
+            ?: return null
 
         val triggerTime = AlarmTimeCalculator.getNextTriggerTime(nextAlarm)
         val formatter = SimpleDateFormat("EEE h:mm a", Locale.getDefault())

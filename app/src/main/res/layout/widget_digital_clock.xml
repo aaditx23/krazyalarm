@@ -4,8 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center_horizontal"
-    android:padding="12dp"
+    android:gravity="center"
+    android:padding="6dp"
     android:background="@android:color/transparent">
 
     <TextClock
@@ -15,34 +15,37 @@
         android:format12Hour="EEE, MMM d"
         android:format24Hour="EEE, MMM d"
         android:textColor="#FF4B5162"
-        android:textSize="20sp" />
+        android:textSize="14sp" />
 
     <TextClock
         android:id="@+id/widget_hour"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="2dp"
         android:format12Hour="hh"
         android:format24Hour="HH"
         android:textColor="#FF5B6072"
-        android:textSize="96sp"
+        android:textSize="76sp"
+        android:includeFontPadding="false"
         android:letterSpacing="0" />
 
     <TextClock
         android:id="@+id/widget_minute"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="-12dp"
         android:format12Hour="mm"
         android:format24Hour="mm"
         android:textColor="#FF3F5F9E"
-        android:textSize="96sp"
+        android:textSize="76sp"
+        android:includeFontPadding="false"
         android:letterSpacing="0" />
 
     <LinearLayout
         android:id="@+id/widget_next_alarm_row"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="2dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
@@ -50,8 +53,8 @@
             android:id="@+id/widget_alarm_icon"
             android:layout_width="18dp"
             android:layout_height="18dp"
-            android:src="@android:drawable/ic_lock_idle_alarm"
-            android:contentDescription="@string/widget_alarm_icon_content_description" />
+            android:contentDescription="@string/widget_alarm_icon_content_description"
+            android:src="@drawable/ic_notification_icon" />
 
         <TextView
             android:id="@+id/widget_next_alarm_text"
@@ -60,7 +63,7 @@
             android:layout_marginStart="6dp"
             android:text="@string/widget_upcoming_alarm_placeholder"
             android:textColor="#FF222222"
-            android:textSize="14sp" />
+            android:textSize="12sp" />
     </LinearLayout>
 
 </LinearLayout>
