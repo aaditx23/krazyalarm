@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.aaditx23.krazyalarm.domain.repository.AlarmRepository
 import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
+import com.aaditx23.krazyalarm.presentation.widget.AlarmWidgetUpdater
 import kotlinx.coroutines.runBlocking
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -29,6 +30,7 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
                     } else {
                         // One-time alarm - disable it after it rings
                         alarmRepository.toggleAlarm(alarmId, false)
+                        AlarmWidgetUpdater.updateAllWidgets(context)
                     }
                 }
             }

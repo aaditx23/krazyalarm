@@ -9,11 +9,12 @@ class DeleteAlarmUseCase(
 ) {
     suspend operator fun invoke(id: Long): Result<Unit> {
         return try {
-            // Cancel any scheduled alarm first
-            alarmScheduler.cancelAlarm(id)
-
-            // Delete from repository
-            alarmRepository.deleteAlarm(id)
+            val deleteResult = alarmRepository.deleteAlarm(id)
+            if (deleteResult.isSuccess) {
+                alarmScheduler.cancelAlarm(id)
+            } else {
+                deleteResult
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }

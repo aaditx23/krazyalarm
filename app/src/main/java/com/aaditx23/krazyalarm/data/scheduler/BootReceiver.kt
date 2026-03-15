@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
+import com.aaditx23.krazyalarm.presentation.widget.AlarmWidgetUpdater
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,6 +30,7 @@ class BootReceiver : BroadcastReceiver(), KoinComponent {
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
                         alarmScheduler.rescheduleAllAlarms()
+                        AlarmWidgetUpdater.updateAllWidgets(context)
                         Log.d(TAG, "Rescheduled all alarms")
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to reschedule alarms", e)
