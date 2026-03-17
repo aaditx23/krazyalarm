@@ -8,6 +8,12 @@ class SettingsRepositoryImpl(
     private val settingsDataStore: SettingsDataStore
 ) : SettingsRepository {
 
+    override val hasSeenPermissionsScreen: Flow<Boolean> = settingsDataStore.hasSeenPermissionsScreen
+
+    override suspend fun setHasSeenPermissionsScreen(seen: Boolean) {
+        settingsDataStore.setHasSeenPermissionsScreen(seen)
+    }
+
     override val snoozeDefaultMinutes: Flow<Int> = settingsDataStore.snoozeDefaultMinutes
 
     override suspend fun setSnoozeDefaultMinutes(minutes: Int) {

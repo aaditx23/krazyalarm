@@ -3,6 +3,9 @@ package com.aaditx23.krazyalarm.domain.repository
 import kotlinx.coroutines.flow.Flow
 
 interface SettingsRepository {
+    val hasSeenPermissionsScreen: Flow<Boolean>
+    suspend fun setHasSeenPermissionsScreen(seen: Boolean)
+
     val snoozeDefaultMinutes: Flow<Int>
     suspend fun setSnoozeDefaultMinutes(minutes: Int)
 

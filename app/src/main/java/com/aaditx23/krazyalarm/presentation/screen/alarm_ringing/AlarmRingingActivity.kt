@@ -35,11 +35,7 @@ class AlarmRingingActivity : ComponentActivity() {
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var backPressedBlocker: OnBackPressedCallback? = null
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private val backInvokedBlocker = android.window.OnBackInvokedCallback {
-        // Intentionally no-op: alarm screen must not be dismissed by back gesture/button.
-    }
+    private var backInvokedBlocker: Any? = null
 
     companion object {
         private const val TAG = "AlarmRingingActivity"
@@ -60,8 +56,10 @@ class AlarmRingingActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Force screen on and show over lockscreen (no keyguard dismissal — that would prompt for password)
-        setShowWhenLocked(true)
-        setTurnScreenOn(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        }
 
         // Additional window flags for lock screen display (for better compatibility)
         @Suppress("DEPRECATION")
@@ -91,10 +89,7 @@ class AlarmRingingActivity : ComponentActivity() {
         }.also { onBackPressedDispatcher.addCallback(this, it) }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            onBackInvokedDispatcher.registerOnBackInvokedCallback(
-                android.window.OnBackInvokedDispatcher.PRIORITY_OVERLAY,
-                backInvokedBlocker
-            )
+            registerPredictiveBackBlockerApi33()
         }
 
         // Collect auto-dismiss events from the service SharedFlow.
@@ -142,7 +137,7 @@ class AlarmRingingActivity : ComponentActivity() {
 
     override fun onDestroy() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            onBackInvokedDispatcher.unregisterOnBackInvokedCallback(backInvokedBlocker)
+            unregisterPredictiveBackBlockerApi33()
         }
         backPressedBlocker?.remove()
         backPressedBlocker = null
@@ -156,6 +151,25 @@ class AlarmRingingActivity : ComponentActivity() {
             }
         }
         wakeLock = null
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun registerPredictiveBackBlockerApi33() {
+        val callback = android.window.OnBackInvokedCallback {
+            // Intentionally block predictive back while alarm is active.
+        }
+        backInvokedBlocker = callback
+        onBackInvokedDispatcher.registerOnBackInvokedCallback(
+            android.window.OnBackInvokedDispatcher.PRIORITY_OVERLAY,
+            callback
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun unregisterPredictiveBackBlockerApi33() {
+        val callback = backInvokedBlocker as? android.window.OnBackInvokedCallback ?: return
+        onBackInvokedDispatcher.unregisterOnBackInvokedCallback(callback)
+        backInvokedBlocker = null
     }
 
     private fun handleDismiss() {

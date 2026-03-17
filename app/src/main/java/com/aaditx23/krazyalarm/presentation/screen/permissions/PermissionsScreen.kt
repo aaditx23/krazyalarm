@@ -117,10 +117,12 @@ private fun getOemAlarmInfo(oem: OemType): OemAlarmInfo? = when (oem) {
 
 @Composable
 fun PermissionsScreen(
+    requireExplicitContinue: Boolean = false,
     onPermissionsGranted: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val hasCameraHardware = remember { PermissionUtils.hasCamera(context) }
 
     val oem = remember { detectOem() }
     val oemAlarmInfo = remember(oem) { getOemAlarmInfo(oem) }
@@ -139,6 +141,7 @@ fun PermissionsScreen(
     var fullScreenIntentGranted by remember {
         mutableStateOf(PermissionUtils.canUseFullScreenIntent(context))
     }
+    val cameraPermissionSatisfied = !hasCameraHardware || cameraPermissionGranted
 
     // Notification permission launcher
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -192,8 +195,8 @@ fun PermissionsScreen(
     }
 
     // Auto-navigate when all permissions are granted
-    LaunchedEffect(notificationPermissionGranted, alarmPermissionGranted, cameraPermissionGranted, fullScreenIntentGranted) {
-        if (notificationPermissionGranted && alarmPermissionGranted && cameraPermissionGranted && fullScreenIntentGranted) {
+    LaunchedEffect(notificationPermissionGranted, alarmPermissionGranted, cameraPermissionGranted, fullScreenIntentGranted, hasCameraHardware) {
+        if (!requireExplicitContinue && notificationPermissionGranted && alarmPermissionGranted && cameraPermissionSatisfied && fullScreenIntentGranted) {
             onPermissionsGranted()
         }
     }
@@ -282,15 +285,17 @@ fun PermissionsScreen(
 
 
             // Camera Permission
-            CompactPermissionCard(
-                icon = Icons.Default.FlashOn,
-                title = "Camera (for Flash)",
-                isGranted = cameraPermissionGranted,
-                onRequestClick = {
-                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                },
-                enabled = fullScreenIntentGranted
-            )
+            if (hasCameraHardware) {
+                CompactPermissionCard(
+                    icon = Icons.Default.FlashOn,
+                    title = "Camera (for Flash)",
+                    isGranted = cameraPermissionGranted,
+                    onRequestClick = {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    },
+                    enabled = fullScreenIntentGranted
+                )
+            }
 
             // OEM-specific guidance if needed
             if (oemAlarmInfo != null && alarmPermissionGranted) {
@@ -337,44 +342,38 @@ fun PermissionsScreen(
             }
         }
 
-        // Bottom Action
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp
+        Column(
+            modifier = Modifier.padding(16.dp).padding(bottom= 16.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                if (notificationPermissionGranted && alarmPermissionGranted && cameraPermissionGranted && fullScreenIntentGranted) {
-                    Button(
-                        onClick = onPermissionsGranted,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "Get Started",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                } else {
-                    Card(
+            if (notificationPermissionGranted && alarmPermissionGranted && cameraPermissionSatisfied && fullScreenIntentGranted) {
+                Button(
+                    onClick = onPermissionsGranted,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = if (requireExplicitContinue) "Continue" else "Get Started",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            } else {
+                Card(
 
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 20.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp),
 
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "Grant all permissions to continue",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.fillMaxWidth().padding(12.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "Grant all permissions to continue",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.fillMaxWidth().padding(12.dp),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }

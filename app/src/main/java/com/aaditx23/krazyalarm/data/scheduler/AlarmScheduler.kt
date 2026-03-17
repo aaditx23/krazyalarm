@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import com.aaditx23.krazyalarm.domain.repository.AlarmRepository
 import com.aaditx23.krazyalarm.domain.models.Alarm
 import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
@@ -59,7 +60,7 @@ class AlarmScheduler(private val context: Context, private val alarmRepository: 
     }
 
     private fun schedule(alarm: Alarm) {
-        if (!alarmManager.canScheduleExactAlarms()) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
             throw SecurityException("Cannot schedule exact alarms: permission not granted")
         }
 

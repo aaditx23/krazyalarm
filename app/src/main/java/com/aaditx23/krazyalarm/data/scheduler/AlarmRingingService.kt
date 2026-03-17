@@ -527,7 +527,7 @@ class AlarmRingingService : Service() {
                     val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
 
                     // Check if we can schedule exact alarms
-                    if (!alarmManager.canScheduleExactAlarms()) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
                         Log.e(TAG, "Cannot schedule exact alarms: permission not granted")
                         return@launch
                     }

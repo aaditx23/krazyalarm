@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
             }
 
             KrazyAlarmTheme(darkTheme = isDarkTheme) {
-                AppNavigation()
+                AppNavigation(settingsRepository = settingsRepository)
             }
         }
     }
