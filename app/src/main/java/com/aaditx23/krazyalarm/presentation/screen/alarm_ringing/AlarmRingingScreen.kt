@@ -1,6 +1,7 @@
 package com.aaditx23.krazyalarm.presentation.screen.alarm_ringing
 
 import androidx.compose.animation.core.*
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -21,6 +22,10 @@ fun AlarmRingingScreen(
     onDismiss: () -> Unit,
     onSnooze: () -> Unit
 ) {
+    BackHandler(enabled = true) {
+        // Intentionally block back navigation while alarm is visible.
+    }
+
     val uiState by viewModel.uiState.collectAsState()
 
     // Pulsing animation for the alarm icon

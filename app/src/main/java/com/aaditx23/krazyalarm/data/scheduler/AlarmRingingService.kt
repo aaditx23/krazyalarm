@@ -5,6 +5,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.PendingIntent.CanceledException
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -161,10 +162,9 @@ class AlarmRingingService : Service() {
                     startForeground(NOTIFICATION_ID, createNotification(alarm))
                 }
 
-                // Also directly start the Activity so it shows over lock screen / when screen is off
-                // on devices where fullScreenIntent alone is not reliable
-                val activityIntent = AlarmRingingActivity.createIntent(this@AlarmRingingService, alarm.id)
-                startActivity(activityIntent)
+                // Trigger the same full-screen PendingIntent explicitly to improve reliability
+                // on OEMs that are strict about background activity starts.
+                launchAlarmUi(alarm.id)
 
                 // Start alarm components
                 startRingtone(alarm)
@@ -200,34 +200,10 @@ class AlarmRingingService : Service() {
     }
 
     private fun createNotification(alarm: Alarm): Notification {
-        val fullScreenIntent = AlarmRingingActivity.createIntent(this, alarm.id)
-
-        val fullScreenPendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            fullScreenIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val fullScreenPendingIntent = createAlarmActivityPendingIntent(alarm.id, alarm.id.toInt())
 
         // Content tap also opens the alarm screen
-        val viewPendingIntent = PendingIntent.getActivity(
-            this,
-            1,
-            fullScreenIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Check if we have permission to use full screen intent
-        val canUseFullScreen = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            val canUse = notificationManager.canUseFullScreenIntent()
-            if (!canUse) {
-                Log.w(TAG, "USE_FULL_SCREEN_INTENT permission not granted - alarm may not show on lock screen!")
-            }
-            canUse
-        } else {
-            true
-        }
+        val viewPendingIntent = createAlarmActivityPendingIntent(alarm.id, alarm.id.toInt() + 10_000)
 
         val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_icon)
@@ -241,13 +217,31 @@ class AlarmRingingService : Service() {
             .setAutoCancel(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setDefaults(0) // No defaults, we handle sound/vibration ourselves
-
-        // Only set full screen intent if we have permission (or on older Android versions)
-        if (canUseFullScreen) {
-            builder.setFullScreenIntent(fullScreenPendingIntent, true)
-        }
+            .setFullScreenIntent(fullScreenPendingIntent, true)
 
         return builder.build()
+    }
+
+    private fun createAlarmActivityPendingIntent(alarmId: Long, requestCode: Int): PendingIntent {
+        val fullScreenIntent = AlarmRingingActivity.createIntent(this, alarmId)
+        return PendingIntent.getActivity(
+            this,
+            requestCode,
+            fullScreenIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun launchAlarmUi(alarmId: Long) {
+        val pendingIntent = createAlarmActivityPendingIntent(alarmId, alarmId.toInt() + 20_000)
+        try {
+            pendingIntent.send()
+        } catch (e: CanceledException) {
+            Log.w(TAG, "PendingIntent canceled, falling back to direct activity launch", e)
+            startActivity(AlarmRingingActivity.createIntent(this, alarmId))
+        } catch (e: Exception) {
+            Log.e(TAG, "Unable to launch alarm activity", e)
+        }
     }
 
     private fun startRingtone(alarm: Alarm) {

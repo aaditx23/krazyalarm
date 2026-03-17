@@ -2,11 +2,14 @@ package com.aaditx23.krazyalarm.presentation.screen.alarm_ringing
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +34,12 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private var wakeLock: PowerManager.WakeLock? = null
+    private var backPressedBlocker: OnBackPressedCallback? = null
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private val backInvokedBlocker = android.window.OnBackInvokedCallback {
+        // Intentionally no-op: alarm screen must not be dismissed by back gesture/button.
+    }
 
     companion object {
         private const val TAG = "AlarmRingingActivity"
@@ -40,8 +49,9 @@ class AlarmRingingActivity : ComponentActivity() {
             return Intent(context, AlarmRingingActivity::class.java).apply {
                 putExtra(EXTRA_ALARM_ID, alarmId)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                       Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                       Intent.FLAG_ACTIVITY_NO_USER_ACTION
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
             }
         }
     }
@@ -73,6 +83,19 @@ class AlarmRingingActivity : ComponentActivity() {
         ).also { it.acquire(10 * 60 * 1000L /* 10 min max */) }
 
         Log.d(TAG, "WakeLock acquired for alarm $alarmId")
+
+        backPressedBlocker = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Block back navigation while alarm is active.
+            }
+        }.also { onBackPressedDispatcher.addCallback(this, it) }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_OVERLAY,
+                backInvokedBlocker
+            )
+        }
 
         // Collect auto-dismiss events from the service SharedFlow.
         // replay=1 means we get the last event even if we subscribe after it was emitted.
@@ -118,6 +141,12 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onBackInvokedDispatcher.unregisterOnBackInvokedCallback(backInvokedBlocker)
+        }
+        backPressedBlocker?.remove()
+        backPressedBlocker = null
+
         super.onDestroy()
         // Release wakelock if still held
         wakeLock?.let {
