@@ -10,6 +10,7 @@ import com.aaditx23.krazyalarm.domain.models.VibrationIntensity
 import com.aaditx23.krazyalarm.domain.models.VibrationPattern
 import com.aaditx23.krazyalarm.domain.repository.SettingsRepository
 import com.aaditx23.krazyalarm.domain.usecase.CreateAlarmUseCase
+import com.aaditx23.krazyalarm.domain.usecase.CancelSnoozeUseCase
 import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
 import com.aaditx23.krazyalarm.domain.usecase.UpdateAlarmUseCase
@@ -25,6 +26,7 @@ class DetailsModalViewModel(
     private val createAlarmUseCase: CreateAlarmUseCase,
     private val updateAlarmUseCase: UpdateAlarmUseCase,
     private val deleteAlarmUseCase: DeleteAlarmUseCase,
+    private val cancelSnoozeUseCase: CancelSnoozeUseCase,
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
@@ -92,6 +94,7 @@ class DetailsModalViewModel(
                         alarmDurationMinutes = alarm.alarmDurationMinutes,
                         ringtoneUri = alarm.ringtoneUri,
                         scheduledDate = alarm.scheduledDate,
+                        snoozedUntilMillis = alarm.snoozedUntilMillis,
                         isLoadingRingtone = true // Set to true so UI shows loading
                     )
                 } else {
@@ -269,6 +272,19 @@ class DetailsModalViewModel(
                         _editEvents.value = AlarmEditEvent.SaveError("Failed to delete alarm: ${exception.message}")
                     }
             }
+        }
+    }
+
+    fun cancelSnooze() {
+        val alarmId = editingAlarmId ?: return
+        viewModelScope.launch {
+            cancelSnoozeUseCase(alarmId)
+                .onSuccess {
+                    _editState.value = _editState.value.copy(snoozedUntilMillis = null)
+                }
+                .onFailure { exception ->
+                    _editEvents.value = AlarmEditEvent.SaveError("Failed to cancel snooze: ${exception.message}")
+                }
         }
     }
 

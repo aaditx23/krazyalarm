@@ -18,6 +18,13 @@ object AlarmTimeCalculator {
         android.util.Log.d("AlarmTimeCalculator", "Alarm ID: ${alarm.id}, hour: ${alarm.hour}, minute: ${alarm.minute}")
         android.util.Log.d("AlarmTimeCalculator", "days: ${alarm.days}, scheduledDate: ${alarm.scheduledDate}")
 
+        val now = System.currentTimeMillis()
+        val activeSnooze = alarm.snoozedUntilMillis
+        if (activeSnooze != null && activeSnooze > now) {
+            android.util.Log.d("AlarmTimeCalculator", "Using active snooze trigger: $activeSnooze")
+            return activeSnooze
+        }
+
         val result = if (alarm.days == 0) {
             val trigger = getNextOneTimeTrigger(alarm.hour, alarm.minute, alarm.scheduledDate)
             android.util.Log.d("AlarmTimeCalculator", "One-time alarm trigger: $trigger")
@@ -28,7 +35,6 @@ object AlarmTimeCalculator {
             trigger
         }
 
-        val now = System.currentTimeMillis()
         val calendar = Calendar.getInstance().apply { timeInMillis = result }
         android.util.Log.d("AlarmTimeCalculator", "Result: ${calendar.time}")
         android.util.Log.d("AlarmTimeCalculator", "Diff from now: ${(result - now) / 1000 / 60} minutes")

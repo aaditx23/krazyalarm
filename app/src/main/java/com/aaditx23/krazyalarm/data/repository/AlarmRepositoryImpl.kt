@@ -38,7 +38,11 @@ class AlarmRepositoryImpl(
             val existing = alarmDao.getAlarmById(id)
             if (existing != null) {
                 android.util.Log.d("AlarmRepository", "Existing alarm found: ID=${existing.id}")
-                val updatedEntity = input.toEntity(id = id, createdAt = existing.createdAt)
+                val updatedEntity = input.toEntity(
+                    id = id,
+                    createdAt = existing.createdAt,
+                    snoozedUntilMillis = existing.snoozedUntilMillis
+                )
                 android.util.Log.d("AlarmRepository", "Updated entity: ID=${updatedEntity.id}")
                 alarmDao.update(updatedEntity)
                 android.util.Log.d("AlarmRepository", "Update successful")
@@ -115,12 +119,29 @@ class AlarmRepositoryImpl(
         }
     }
 
+    override suspend fun updateSnoozedUntil(id: Long, snoozedUntilMillis: Long?): Result<Unit> {
+        return try {
+            alarmDao.updateSnoozedUntil(
+                id = id,
+                snoozedUntilMillis = snoozedUntilMillis,
+                updatedAt = System.currentTimeMillis()
+            )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getEnabledAlarms(): List<Alarm> {
         return alarmDao.getEnabledAlarms().map { it.toDomain() }
     }
 
 
-    private fun AlarmInput.toEntity(id: Long = 0, createdAt: Long = System.currentTimeMillis()): AlarmEntity {
+    private fun AlarmInput.toEntity(
+        id: Long = 0,
+        createdAt: Long = System.currentTimeMillis(),
+        snoozedUntilMillis: Long? = null
+    ): AlarmEntity {
         return AlarmEntity(
             id = id,
             hour = hour,
@@ -135,6 +156,7 @@ class AlarmRepositoryImpl(
             snoozeDurationMinutes = snoozeDurationMinutes,
             alarmDurationMinutes = alarmDurationMinutes,
             scheduledDate = scheduledDate,
+            snoozedUntilMillis = snoozedUntilMillis,
             createdAt = createdAt,
             updatedAt = System.currentTimeMillis()
         )
@@ -155,6 +177,7 @@ class AlarmRepositoryImpl(
             snoozeDurationMinutes = snoozeDurationMinutes,
             alarmDurationMinutes = alarmDurationMinutes,
             scheduledDate = scheduledDate,
+            snoozedUntilMillis = snoozedUntilMillis,
             createdAt = createdAt,
             updatedAt = updatedAt
         )
@@ -175,6 +198,7 @@ class AlarmRepositoryImpl(
             snoozeDurationMinutes = snoozeDurationMinutes,
             alarmDurationMinutes = alarmDurationMinutes,
             scheduledDate = scheduledDate,
+            snoozedUntilMillis = snoozedUntilMillis,
             createdAt = createdAt,
             updatedAt = updatedAt
         )

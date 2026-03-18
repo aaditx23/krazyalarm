@@ -24,6 +24,7 @@ class UpdateAlarmUseCase(
                     if (alarm.enabled) {
                         alarmScheduler.scheduleAlarm(alarm)
                     } else {
+                        alarmRepository.updateSnoozedUntil(id, null)
                         alarmScheduler.cancelAlarm(id)
                     }
                     Result.success(alarm)

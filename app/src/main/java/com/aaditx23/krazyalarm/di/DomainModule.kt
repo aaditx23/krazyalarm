@@ -2,6 +2,7 @@ package com.aaditx23.krazyalarm.di
 
 
 import com.aaditx23.krazyalarm.domain.usecase.CalculateNextAlarmTimeUseCase
+import com.aaditx23.krazyalarm.domain.usecase.CancelSnoozeUseCase
 import com.aaditx23.krazyalarm.domain.usecase.CreateAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
@@ -19,5 +20,6 @@ val domainModule = module {
     factory { UpdateAlarmUseCase(get(), get()) }
     factory { DeleteAlarmUseCase(get(), get()) }
     factory { ToggleAlarmUseCase(get(), get()) }
+    factory { CancelSnoozeUseCase(get(), get()) }
     factory { CalculateNextAlarmTimeUseCase() }
 }

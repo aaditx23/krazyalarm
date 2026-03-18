@@ -164,7 +164,7 @@ fun AlarmListScreen(
                                 onSwipeDelete = { viewModel.swipeDeleteAlarm(alarm) },
                                 onTimeChange = { hour, minute ->
                                     viewModel.updateAlarmTime(alarm.id, hour, minute)
-                                }
+                                },
                             )
                         }
                     }

@@ -1,5 +1,6 @@
 package com.aaditx23.krazyalarm.presentation.screen.alarm_list.components
 
+import android.R
 import android.annotation.SuppressLint
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -17,11 +18,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AlarmOff
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -40,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.aaditx23.krazyalarm.domain.models.Alarm
@@ -72,6 +77,7 @@ fun AlarmItemCard(
         if (alarm.enabled) AlarmTimeCalculator.getNextTriggerTime(alarm) else 0L
     }
     val remainingMillis = if (alarm.enabled) (triggerTime - nowMillis).coerceAtLeast(0L) else 0L
+    val hasActiveSnooze = alarm.snoozedUntilMillis?.let { it > nowMillis } == true
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -187,25 +193,33 @@ fun AlarmItemCard(
                                 .padding(vertical = 6.dp)
                                 .padding(start = 4.dp)
                                 .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start,
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            val displayText = AlarmScheduleFormatter.cardLabel(alarm)
-                            if (displayText.isNotEmpty()) {
-                                Text(
-                                    text = displayText,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Normal
-                                )
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val displayText = AlarmScheduleFormatter.cardLabel(alarm)
+                                if (displayText.isNotEmpty()) {
+                                    Text(
+                                        text = displayText,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Normal
+                                    )
+                                }
+                                alarm.label?.let { label ->
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Thin,
+                                        modifier = Modifier.padding(horizontal = 12.dp)
+                                    )
+                                }
                             }
-                            alarm.label?.let { label ->
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Thin,
-                                    modifier = Modifier.padding(horizontal = 12.dp)
-                                )
-                            }
+
+
                         }
 
                         // Countdown — only shown when enabled
@@ -258,10 +272,22 @@ fun AlarmItemCard(
                         }
                     } // end Column
 
-                    Switch(
-                        checked = alarm.enabled,
-                        onCheckedChange = onToggle,
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ){
+                        if (hasActiveSnooze) {
+                            Text(
+                                "Snoozed",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                        Switch(
+                            checked = alarm.enabled,
+                            onCheckedChange = onToggle,
+                        )
+                    }
+
                 } // end Row
             } // end Card
         } // end Box

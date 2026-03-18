@@ -14,5 +14,6 @@ interface AlarmRepository {
     fun observeAlarms(): Flow<List<Alarm>>
     suspend fun getAlarm(id: Long): Alarm?
     suspend fun toggleAlarm(id: Long, enabled: Boolean): Result<Unit>
+    suspend fun updateSnoozedUntil(id: Long, snoozedUntilMillis: Long?): Result<Unit>
     suspend fun getEnabledAlarms(): List<Alarm>
 }

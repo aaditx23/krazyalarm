@@ -21,7 +21,8 @@ data class DetailsModalState(
     val alarmDurationMinutes: Int = 1,
     val ringtoneUri: String? = null,
     val ringtoneName: String = "",
-    val scheduledDate: Long? = null // Specific date in millis for one-time alarms (when days == 0)
+    val scheduledDate: Long? = null, // Specific date in millis for one-time alarms (when days == 0)
+    val snoozedUntilMillis: Long? = null
 )
 
 sealed class AlarmEditEvent {

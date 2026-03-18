@@ -48,7 +48,7 @@ fun SnoozeDurationCard(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(12.dp),
                     supportingText = { Text("Enter value between 1 and 60") }
                 )
             },

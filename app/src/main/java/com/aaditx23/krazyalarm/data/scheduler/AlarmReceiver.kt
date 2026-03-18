@@ -21,6 +21,10 @@ class AlarmReceiver : BroadcastReceiver(), KoinComponent {
             runBlocking {
                 val alarm = alarmRepository.getAlarm(alarmId)
                 if (alarm != null) {
+                    if (alarm.snoozedUntilMillis != null) {
+                        alarmRepository.updateSnoozedUntil(alarmId, null)
+                    }
+
                     // Add alarm to queue instead of starting immediately
                     AlarmQueueManager.enqueueAlarm(context, alarmId)
 

@@ -524,32 +524,9 @@ class AlarmRingingService : Service() {
 
             CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val alarmManager = getSystemService(ALARM_SERVICE) as AlarmManager
-
-                    // Check if we can schedule exact alarms
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-                        Log.e(TAG, "Cannot schedule exact alarms: permission not granted")
-                        return@launch
-                    }
-
-                    // Schedule snooze alarm
-                    val snoozeTime = System.currentTimeMillis() + (alarm.snoozeDurationMinutes * 60 * 1000)
-                    val snoozeIntent = Intent(this@AlarmRingingService, AlarmReceiver::class.java).apply {
-                        putExtra("alarm_id", alarm.id)
-                    }
-
-                    val pendingIntent = PendingIntent.getBroadcast(
-                        this@AlarmRingingService,
-                        (alarm.id + 1000).toInt(), // Different request code for snooze
-                        snoozeIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                    )
-
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        snoozeTime,
-                        pendingIntent
-                    )
+                    val snoozeTime = System.currentTimeMillis() + (alarm.snoozeDurationMinutes * 60 * 1000L)
+                    alarmRepository.updateSnoozedUntil(alarm.id, snoozeTime)
+                    alarmScheduler.scheduleAlarm(alarm.copy(snoozedUntilMillis = snoozeTime))
                 } catch (e: SecurityException) {
                     Log.e(TAG, "SecurityException when scheduling snooze", e)
                 } catch (e: Exception) {

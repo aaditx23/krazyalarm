@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,11 +24,13 @@ import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.DaySe
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.FlashPatternCard
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.FlashPatternSelectionDialog
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.ScheduleAlarmButton
+import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.SnoozeStatusSection
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.SoundCard
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.TimeDisplaySection
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.UpcomingAlarmSection
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.VibrationPatternCard
 import com.aaditx23.krazyalarm.presentation.screen.DetailsModal.components.VibrationPatternSelectionDialog
+import kotlinx.coroutines.delay
 
 @Composable
 fun DetailsModalContent(
@@ -40,9 +43,19 @@ fun DetailsModalContent(
 ) {
     val state by viewModel.editState.collectAsState()
     val events by viewModel.editEvents.collectAsState()
+    var nowMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    val hasActiveSnooze = state.isEditMode && (state.snoozedUntilMillis?.let { it > nowMillis } == true)
 
     var showFlashPatternDialog by remember { mutableStateOf(false) }
     var showVibrationPatternDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(hasActiveSnooze, state.snoozedUntilMillis) {
+        if (!hasActiveSnooze) return@LaunchedEffect
+        while (true) {
+            nowMillis = System.currentTimeMillis()
+            delay(1000)
+        }
+    }
 
     // Handle events - Don't consume or close for success events, let the parent handle it
     events?.let { event ->
@@ -82,6 +95,15 @@ fun DetailsModalContent(
             onTimeClick = onTimeClick,
             modifier = Modifier.padding(horizontal = 24.dp)
         )
+
+        if (hasActiveSnooze) {
+            val remainingMillis = (state.snoozedUntilMillis ?: nowMillis) - nowMillis
+            SnoozeStatusSection(
+                countdownText = formatSnoozeCountdown(remainingMillis),
+                onCancelSnooze = viewModel::cancelSnooze,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -191,3 +213,12 @@ fun DetailsModalContent(
         )
     }
 }
+
+private fun formatSnoozeCountdown(remainingMillis: Long): String {
+    val totalSeconds = (remainingMillis.coerceAtLeast(0L) / 1000L)
+    val hours = totalSeconds / 3600L
+    val minutes = (totalSeconds % 3600L) / 60L
+    val seconds = totalSeconds % 60L
+    return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+}
+

@@ -32,6 +32,9 @@ interface AlarmDao {
     @Query("SELECT * FROM alarms WHERE enabled = 1")
     suspend fun getEnabledAlarms(): List<AlarmEntity>
 
+    @Query("UPDATE alarms SET snoozedUntilMillis = :snoozedUntilMillis, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateSnoozedUntil(id: Long, snoozedUntilMillis: Long?, updatedAt: Long)
+
     @Query("SELECT * FROM alarms ORDER BY hour, minute")
     suspend fun getAllAlarms(): List<AlarmEntity>
 }

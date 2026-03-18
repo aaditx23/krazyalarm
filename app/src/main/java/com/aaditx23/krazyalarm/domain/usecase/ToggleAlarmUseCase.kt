@@ -41,6 +41,7 @@ class ToggleAlarmUseCase(
                     alarmScheduler.scheduleAlarm(alarm.copy(enabled = true))
                 }
             } else {
+                alarmRepository.updateSnoozedUntil(id, null)
                 alarmRepository.toggleAlarm(id, false)
                 alarmScheduler.cancelAlarm(id)
             }

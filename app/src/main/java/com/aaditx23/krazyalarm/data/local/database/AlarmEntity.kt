@@ -25,6 +25,7 @@ data class AlarmEntity(
     val snoozeDurationMinutes: Int = 10,
     val alarmDurationMinutes: Int = 1,
     val scheduledDate: Long? = null, // Specific date in millis for one-time alarms
+    val snoozedUntilMillis: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

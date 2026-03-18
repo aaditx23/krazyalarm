@@ -14,6 +14,7 @@ data class Alarm(
     val snoozeDurationMinutes: Int = 10,
     val alarmDurationMinutes: Int = 1, // How long the alarm will ring (1-5 minutes)
     val scheduledDate: Long? = null, // Specific date in millis for one-time alarms
+    val snoozedUntilMillis: Long? = null, // Active snooze trigger time; null when no snooze is pending
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )

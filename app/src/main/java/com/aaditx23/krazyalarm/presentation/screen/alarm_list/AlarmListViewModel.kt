@@ -6,6 +6,7 @@ import com.aaditx23.krazyalarm.domain.models.AlarmInput
 import com.aaditx23.krazyalarm.domain.repository.AlarmRepository
 import com.aaditx23.krazyalarm.domain.repository.AlarmScheduler
 import com.aaditx23.krazyalarm.domain.usecase.DeleteAlarmUseCase
+import com.aaditx23.krazyalarm.domain.usecase.CancelSnoozeUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmByIdUseCase
 import com.aaditx23.krazyalarm.domain.usecase.GetAlarmsUseCase
 import com.aaditx23.krazyalarm.domain.usecase.ToggleAlarmUseCase
@@ -23,6 +24,7 @@ class AlarmListViewModel(
     private val getAlarmsUseCase: GetAlarmsUseCase,
     private val toggleAlarmUseCase: ToggleAlarmUseCase,
     private val deleteAlarmUseCase: DeleteAlarmUseCase,
+    private val cancelSnoozeUseCase: CancelSnoozeUseCase,
     private val alarmRepository: AlarmRepository,
     private val alarmScheduler: AlarmScheduler,
     private val getAlarmByIdUseCase: GetAlarmByIdUseCase,
@@ -121,6 +123,15 @@ class AlarmListViewModel(
             updateAlarmUseCase(alarmId, input)
                 .onFailure {
                     _uiEvents.value = UiEvent.Error("Failed to update alarm time")
+                }
+        }
+    }
+
+    fun cancelSnooze(alarmId: Long) {
+        viewModelScope.launch {
+            cancelSnoozeUseCase(alarmId)
+                .onFailure {
+                    _uiEvents.value = UiEvent.Error("Failed to cancel snooze")
                 }
         }
     }
