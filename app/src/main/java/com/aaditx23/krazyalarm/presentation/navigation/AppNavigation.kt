@@ -122,10 +122,7 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onTestAlarm = {
-                    val intent = AlarmRingingActivity.createIntent(
-                        context = context,
-                        alarmId = -1L
-                    )
+                    val intent = AlarmRingingActivity.createPreviewIntent(context)
                     context.startActivity(intent)
                 }
             )

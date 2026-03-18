@@ -20,9 +20,10 @@ import java.util.*
 fun AlarmRingingScreen(
     viewModel: AlarmRingingViewModel,
     onDismiss: () -> Unit,
-    onSnooze: () -> Unit
+    onSnooze: () -> Unit,
+    blockBackNavigation: Boolean = true
 ) {
-    BackHandler(enabled = true) {
+    BackHandler(enabled = blockBackNavigation) {
         // Intentionally block back navigation while alarm is visible.
     }
 

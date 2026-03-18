@@ -40,6 +40,7 @@ class AlarmRingingActivity : ComponentActivity() {
     companion object {
         private const val TAG = "AlarmRingingActivity"
         const val EXTRA_ALARM_ID = "alarm_id"
+        const val PREVIEW_ALARM_ID = -1L
 
         fun createIntent(context: Context, alarmId: Long): Intent {
             return Intent(context, AlarmRingingActivity::class.java).apply {
@@ -50,7 +51,18 @@ class AlarmRingingActivity : ComponentActivity() {
                     Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
             }
         }
+
+        fun createPreviewIntent(context: Context, alarmId: Long = PREVIEW_ALARM_ID): Intent {
+            return Intent(context, AlarmRingingActivity::class.java).apply {
+                putExtra(EXTRA_ALARM_ID, alarmId)
+                // Keep this inside the current task so closing preview returns to Settings.
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            }
+        }
     }
+
+    private val isPreviewMode: Boolean
+        get() = alarmId == PREVIEW_ALARM_ID
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,14 +94,16 @@ class AlarmRingingActivity : ComponentActivity() {
 
         Log.d(TAG, "WakeLock acquired for alarm $alarmId")
 
-        backPressedBlocker = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                // Block back navigation while alarm is active.
-            }
-        }.also { onBackPressedDispatcher.addCallback(this, it) }
+        if (!isPreviewMode) {
+            backPressedBlocker = object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    // Block back navigation while a real alarm is active.
+                }
+            }.also { onBackPressedDispatcher.addCallback(this, it) }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerPredictiveBackBlockerApi33()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerPredictiveBackBlockerApi33()
+            }
         }
 
         // Collect auto-dismiss events from the service SharedFlow.
@@ -115,7 +129,8 @@ class AlarmRingingActivity : ComponentActivity() {
                 AlarmRingingScreen(
                     viewModel = viewModel,
                     onDismiss = { handleDismiss() },
-                    onSnooze = { handleSnooze() }
+                    onSnooze = { handleSnooze() },
+                    blockBackNavigation = !isPreviewMode
                 )
             }
         }
@@ -123,8 +138,8 @@ class AlarmRingingActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Preview mode (alarmId == -1) has no backing service — skip the ringing check.
-        if (alarmId == -1L) return
+        // Preview mode has no backing service — skip the ringing check.
+        if (isPreviewMode) return
 
         // If the alarm is no longer ringing (e.g. auto-dismissed while screen was off),
         // close this activity immediately.
@@ -173,7 +188,7 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private fun handleDismiss() {
-        if (alarmId == -1L) { finish(); return }
+        if (isPreviewMode) { finish(); return }
         // Send dismiss action to service
         val dismissIntent = Intent(this, AlarmRingingService::class.java).apply {
             action = AlarmRingingService.ACTION_DISMISS
@@ -184,7 +199,7 @@ class AlarmRingingActivity : ComponentActivity() {
     }
 
     private fun handleSnooze() {
-        if (alarmId == -1L) { finish(); return }
+        if (isPreviewMode) { finish(); return }
         // Send snooze action to service
         val snoozeIntent = Intent(this, AlarmRingingService::class.java).apply {
             action = AlarmRingingService.ACTION_SNOOZE
