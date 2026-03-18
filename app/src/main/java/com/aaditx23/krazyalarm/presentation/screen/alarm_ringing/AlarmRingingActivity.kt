@@ -46,8 +46,8 @@ class AlarmRingingActivity : ComponentActivity() {
             return Intent(context, AlarmRingingActivity::class.java).apply {
                 putExtra(EXTRA_ALARM_ID, alarmId)
                 // Do not clear the app task; closing alarm UI should return to existing app state.
+                // Use fresh-instance behavior for consecutive alarms.
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
                     Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
             }
         }

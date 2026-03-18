@@ -138,6 +138,14 @@ class AlarmRingingService : Service() {
     private fun startAlarmRinging(alarmId: Long) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                val previousAlarmId = currentAlarm?.id
+                if (previousAlarmId != null && previousAlarmId != alarmId) {
+                    Log.d(TAG, "Replacing active alarm $previousAlarmId with new alarm $alarmId")
+                    // Close the currently visible alarm activity before launching a fresh one.
+                    _autoDismissFlow.emit(previousAlarmId)
+                    endCurrentSession(previousAlarmId)
+                }
+
                 val alarm = alarmRepository.getAlarm(alarmId)
                 if (alarm == null) {
                     Log.e(TAG, "Alarm not found: $alarmId")
@@ -505,14 +513,7 @@ class AlarmRingingService : Service() {
             Log.e(TAG, "dismissAlarm() called but currentAlarm is null!")
         }
 
-        _currentRingingAlarmId.value = null
-        stopAllAlarmComponents()
-
-        // Notify queue manager that this alarm finished
-        if (alarmId != null) {
-            Log.d(TAG, "Notifying AlarmQueueManager that alarm $alarmId finished")
-            AlarmQueueManager.onAlarmFinished(this, alarmId)
-        }
+        endCurrentSession(alarmId)
 
         Log.d(TAG, "Stopping service")
         stopSelf()
@@ -536,15 +537,20 @@ class AlarmRingingService : Service() {
         }
 
         val alarmId = currentAlarm?.id
-        _currentRingingAlarmId.value = null
-        stopAllAlarmComponents()
-
-        // Notify queue manager that this alarm finished
-        if (alarmId != null) {
-            AlarmQueueManager.onAlarmFinished(this, alarmId)
-        }
+        endCurrentSession(alarmId)
 
         stopSelf()
+    }
+
+    private fun endCurrentSession(alarmId: Long?) {
+        _currentRingingAlarmId.value = null
+        stopAllAlarmComponents()
+        currentAlarm = null
+
+        if (alarmId != null) {
+            Log.d(TAG, "Notifying AlarmQueueManager that alarm $alarmId finished")
+            AlarmQueueManager.onAlarmFinished(this, alarmId)
+        }
     }
 
     private fun stopAllAlarmComponents() {
